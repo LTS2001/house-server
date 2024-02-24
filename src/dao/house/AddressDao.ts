@@ -22,12 +22,20 @@ export class AddressDao {
   }
 
   /**
-   * 获取房屋地址信息
-   * @param addressId 地址id
+   * 更新房屋地址信息
+   * @param houseAddress 房屋地址信息
    */
-  async getHouseAddress(addressId: number[]) {
+  async updateHouseAddress(houseAddress: HouseAddress) {
+    return await this.houseAddressModel.save(houseAddress)
+  }
+
+  /**
+   * 获取房屋地址信息
+   * @param addressIds 地址id列表
+   */
+  async getHouseAddress(addressIds: number[]) {
     return await this.houseAddressModel.find({
-      where: addressId.map(id => ({id}))
+      where: addressIds.map(id => ({id}))
     })
   }
 

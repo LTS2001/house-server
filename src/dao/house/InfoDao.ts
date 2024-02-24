@@ -22,15 +22,35 @@ export class InfoDao {
   }
 
   /**
-   * 获取房屋信息
+   * 更新房屋信息
+   * @param houseInfo 房屋信息
+   */
+  async updateHouseInfo(houseInfo: HouseInfo) {
+    return await this.houseInfoModel.save(houseInfo);
+  }
+
+  /**
+   * 获取房屋信息通过用户id
    * @param userId 用户id
    * @return houseInfo 房屋信息
    */
-  async getHouseInfo(userId: number) {
+  async getHouseInfoByUserId(userId: number) {
     return await this.houseInfoModel.find({
       where: {
         landlordId: userId,
       }
     })
   }
+
+  /**
+   * 获取房屋信息通过房屋id
+   * @param houseIds 房屋id列表
+   */
+  async getHouseInfoByHouseIds(houseIds: number[]) {
+    return await this.houseInfoModel.find({
+      where: houseIds.map(id => ({id}))
+    })
+  }
+
+
 }

@@ -19,13 +19,8 @@ export class HouseInfo {
   @Column("int", {name: "address_id", comment: "地址id"})
   addressId: number;
 
-  @Column("varchar", {
-    name: "area",
-    nullable: true,
-    comment: "面积",
-    length: 255,
-  })
-  area: string | null;
+  @Column("int", {name: "area", comment: "面积"})
+  area: number;
 
   @Column("double", {name: "price", comment: "租金", precision: 10, scale: 2})
   price: number;
