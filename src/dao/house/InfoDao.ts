@@ -1,7 +1,7 @@
-import {Provide} from "@midwayjs/core";
-import {Repository} from "typeorm";
-import {InjectEntityModel} from "@midwayjs/orm";
-import {HouseInfo} from "../../entities/HouseInfo";
+import { Provide } from '@midwayjs/core';
+import { Repository } from 'typeorm';
+import { InjectEntityModel } from '@midwayjs/orm';
+import { HouseInfo } from '../../entities/HouseInfo';
 
 @Provide()
 export class InfoDao {
@@ -17,7 +17,7 @@ export class InfoDao {
     const houseInfo = new HouseInfo();
     Object.keys(addHouseInfo).forEach(key => {
       houseInfo[key] = addHouseInfo[key];
-    })
+    });
     return await this.houseInfoModel.save(houseInfo);
   }
 
@@ -39,7 +39,7 @@ export class InfoDao {
       where: {
         landlordId: userId,
       }
-    })
+    });
   }
 
   /**
@@ -49,8 +49,13 @@ export class InfoDao {
   async getHouseInfoByHouseIds(houseIds: number[]) {
     return await this.houseInfoModel.find({
       where: houseIds.map(id => ({id}))
-    })
+    });
   }
 
-
+  /**
+   * 分页获取房屋
+   */
+  async getHousesByPage() {
+    return await this.houseInfoModel.find();
+  }
 }

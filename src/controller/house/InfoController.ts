@@ -1,9 +1,9 @@
-import {Body, Controller, Del, File, Get, Inject, Post, Put, Query} from "@midwayjs/core";
-import {JwtMiddleware} from "../../middleware/JwtMiddleware";
-import {AddHouseReq, UpdateHouseReq} from "../../dto/HouseInfo";
-import {InfoService} from "../../service/house/InfoService";
-import {ResultUtils} from "../../common/ResultUtils";
-import {Context} from "@midwayjs/koa";
+import { Body, Controller, Del, File, Get, Inject, Post, Put, Query } from '@midwayjs/core';
+import { JwtMiddleware } from '../../middleware/JwtMiddleware';
+import { AddHouseReq, UpdateHouseReq } from '../../dto/HouseInfo';
+import { InfoService } from '../../service/house/InfoService';
+import { ResultUtils } from '../../common/ResultUtils';
+import { Context } from '@midwayjs/koa';
 
 @Controller('/house/info')
 export class InfoController {
@@ -67,7 +67,12 @@ export class InfoController {
    */
   @Del('/img', {middleware: [JwtMiddleware]})
   async delHouseImg(@Body() info: { houseId: number, imgName: string }) {
-    console.log(info)
+    console.log(info);
     return new ResultUtils().success(await this.infoService.delHouseImg(info.houseId, info.imgName));
+  }
+
+  @Get('/page')
+  async getHousesByPage() {
+    return new ResultUtils().success(await this.infoService.getHouseInfoByPage());
   }
 }

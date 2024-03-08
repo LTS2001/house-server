@@ -1,8 +1,8 @@
-import {InjectEntityModel} from "@midwayjs/orm";
-import {UserLandlord} from "../../entities/UserLandlord";
-import {Repository} from "typeorm";
-import {Provide} from "@midwayjs/core";
-import {UpdateUserReq} from "../../dto/user/landlord/UpdateUserReq";
+import { InjectEntityModel } from '@midwayjs/orm';
+import { UserLandlord } from '../../entities/UserLandlord';
+import { Repository } from 'typeorm';
+import { Provide } from '@midwayjs/core';
+import { UpdateUserReq } from '../../dto/user/landlord/UpdateUserReq';
 
 @Provide()
 export class LandlordDao {
@@ -17,7 +17,7 @@ export class LandlordDao {
   async getUserByPhone(phone: string): Promise<UserLandlord | null> {
     return await this.userLandlordModel.findOne({
       where: {phone}
-    })
+    });
   }
 
   /**
@@ -41,7 +41,7 @@ export class LandlordDao {
   async updateUserHeadImg(phone: string, imgUrl: string) {
     const userLandlord = await this.userLandlordModel.findOne({
       where: {phone}
-    })
+    });
     userLandlord.headImg = imgUrl;
     return await this.userLandlordModel.save(userLandlord);
   }
@@ -54,7 +54,7 @@ export class LandlordDao {
   async getUser(phone: string) {
     return await this.userLandlordModel.findOne({
       where: {phone}
-    })
+    });
   }
 
   /**
@@ -65,11 +65,20 @@ export class LandlordDao {
   async updateUser(phone: string, updateUserInfo: UpdateUserReq) {
     const userLandlord = await this.userLandlordModel.findOne({
       where: {phone}
-    })
+    });
     Object.keys(updateUserInfo).forEach(item => {
       userLandlord[item] = updateUserInfo[item];
-    })
+    });
     return await this.userLandlordModel.save(userLandlord);
   }
 
+  /**
+   * 通过用户id列表获取用户信息列表
+   * @param ids
+   */
+  async getUsersByIds(ids: Array<number>) {
+    return await this.userLandlordModel.find({
+      where: ids.map(id => ({id}))
+    });
+  }
 }

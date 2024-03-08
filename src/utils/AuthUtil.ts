@@ -14,7 +14,6 @@ export default class AuthUtil {
    * @return decryptPhone 解密后的手机号
    */
   async getUserFromToken(ctx: Context, jwtService: JwtService) {
-
     // 从 header 上获取校验信息
     const parts = ctx.get('authorization').trim().split(' ');
     if (parts.length !== 2) {
@@ -35,6 +34,8 @@ export default class AuthUtil {
         console.info(error)
         throw new BusinessException(ResponseCode.NOT_LOGIN_ERROR);
       }
+    } else {
+      throw new BusinessException(ResponseCode.NOT_LOGIN_ERROR);
     }
   }
 }

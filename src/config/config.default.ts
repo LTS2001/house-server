@@ -1,10 +1,13 @@
-import {MidwayConfig} from '@midwayjs/core';
+import { MidwayConfig } from '@midwayjs/core';
 
 export default {
   // use for cookie sign key, should change to your own and keep security
   keys: '1700985031838_8605',
   koa: {
     port: 7001,
+  },
+  webSocket: {
+    port: 7002,
   },
   orm: {
     type: 'mysql',
@@ -19,8 +22,8 @@ export default {
   redis: {
     client: {
       port: 6379,
-      host: "127.0.0.1",
-      password: "123456",
+      host: '127.0.0.1',
+      password: '123456',
       db: 0,
     },
   },

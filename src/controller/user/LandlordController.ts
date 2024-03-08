@@ -1,15 +1,15 @@
-import {Body, Controller, Files, Get, Inject, Post, Put} from "@midwayjs/core";
-import {ValidateUtil} from "../../utils/ValidateUtil";
-import {BusinessException} from "../../exception/BusinessException";
-import {ResponseCode} from "../../common/ResponseFormat";
-import LandlordService from "../../service/user/LandlordService";
-import {ResultUtils} from "../../common/ResultUtils";
-import {Context} from "@midwayjs/koa";
-import {UserLandlord} from "../../entities/UserLandlord";
-import {JwtMiddleware} from "../../middleware/JwtMiddleware";
-import {JwtService} from "@midwayjs/jwt";
-import AuthUtil from "../../utils/AuthUtil";
-import {UpdateUserReq} from "../../dto/user/landlord/UpdateUserReq";
+import { Body, Controller, Files, Get, Inject, Post, Put, Query } from '@midwayjs/core';
+import { ValidateUtil } from '../../utils/ValidateUtil';
+import { BusinessException } from '../../exception/BusinessException';
+import { ResponseCode } from '../../common/ResponseFormat';
+import LandlordService from '../../service/user/LandlordService';
+import { ResultUtils } from '../../common/ResultUtils';
+import { Context } from '@midwayjs/koa';
+import { UserLandlord } from '../../entities/UserLandlord';
+import { JwtMiddleware } from '../../middleware/JwtMiddleware';
+import { JwtService } from '@midwayjs/jwt';
+import AuthUtil from '../../utils/AuthUtil';
+import { UpdateUserReq } from '../../dto/user/landlord/UpdateUserReq';
 
 @Controller('/user/landlord')
 export class LandlordController {
@@ -62,5 +62,16 @@ export class LandlordController {
     const {phone} = this.ctx.user;
     const url = await this.userLandlordService.updateHeadImg(phone, imgUrl);
     return new ResultUtils().success<string>(url);
+  }
+
+  /**
+   * 获取用户信息
+   * @param landlordIds 用户id列表
+   */
+  @Get('/list')
+  async getUsersByIds(@Query('ids') landlordIds: string) {
+    const idsStr = landlordIds.split(',');
+    const idsNum = idsStr.map(id => (Number(id)));
+    return new ResultUtils().success(await this.userLandlordService.getUsersByIds([...new Set(idsNum)]));
   }
 }

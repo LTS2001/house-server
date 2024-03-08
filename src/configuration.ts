@@ -1,5 +1,5 @@
-import {Configuration, App} from '@midwayjs/core';
-import {join} from 'path';
+import { Configuration, App } from '@midwayjs/core';
+import { join } from 'path';
 import * as koa from '@midwayjs/koa';
 import * as validate from '@midwayjs/validate';
 import * as info from '@midwayjs/info';
@@ -9,11 +9,12 @@ import * as i18n from '@midwayjs/i18n';
 import * as crossDomain from '@midwayjs/cross-domain';
 import * as jwt from '@midwayjs/jwt';
 import * as upload from '@midwayjs/upload';
-import {ReportMiddleware} from './middleware/report.middleware';
-import {ValidationFilter} from './filter/ValidationFilter';
-import {BusinessFilter} from "@/filter/BusinessFilter";
-import {NotfoundFilter} from "@/filter/NotfoundFilter";
-import {DefaultFilter} from "@/filter/DefaultFilter";
+import * as ws from '@midwayjs/ws';
+import { ReportMiddleware } from './middleware/report.middleware';
+import { ValidationFilter } from './filter/ValidationFilter';
+import { BusinessFilter } from '@/filter/BusinessFilter';
+import { NotfoundFilter } from '@/filter/NotfoundFilter';
+import { DefaultFilter } from '@/filter/DefaultFilter';
 
 @Configuration({
   imports: [
@@ -29,6 +30,7 @@ import {DefaultFilter} from "@/filter/DefaultFilter";
     crossDomain,
     jwt,
     upload,
+    ws,
   ],
   importConfigs: [join(__dirname, './config')],
 })

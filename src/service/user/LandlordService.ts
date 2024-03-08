@@ -1,11 +1,11 @@
-import {Inject, Provide} from "@midwayjs/core";
-import {LandlordDao} from "../../dao/user/LandlordDao";
-import {CryptoUtil} from "../../utils/CryptoUtil";
-import {UserLandlord} from "../../entities/UserLandlord";
-import {Context} from "@midwayjs/koa";
-import {RedisService} from "@midwayjs/redis";
-import {JwtService} from "@midwayjs/jwt";
-import {UpdateUserReq} from "../../dto/user/landlord/UpdateUserReq";
+import { Inject, Provide } from '@midwayjs/core';
+import { LandlordDao } from '../../dao/user/LandlordDao';
+import { CryptoUtil } from '../../utils/CryptoUtil';
+import { UserLandlord } from '../../entities/UserLandlord';
+import { Context } from '@midwayjs/koa';
+import { RedisService } from '@midwayjs/redis';
+import { JwtService } from '@midwayjs/jwt';
+import { UpdateUserReq } from '../../dto/user/landlord/UpdateUserReq';
 
 @Provide()
 export default class LandlordService {
@@ -33,7 +33,7 @@ export default class LandlordService {
       userLandlord = await this.userLandlordDao.addUser(phone);
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
-    this.ctx.set('Token', `Bearer ${this.jwtService.signSync({phone: encryptPhone})}`);
+    this.ctx.set('Token', `Bearer ${ this.jwtService.signSync({phone: encryptPhone}) }`);
     this.ctx.set('Access-Control-Expose-Headers', 'Token');
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(userLandlord));
@@ -60,7 +60,7 @@ export default class LandlordService {
    */
   async getUser(phone: string) {
     const userLandlord = await this.userLandlordDao.getUser(phone);
-    await this.redisService.set(phone, JSON.stringify(userLandlord))
+    await this.redisService.set(phone, JSON.stringify(userLandlord));
     return userLandlord;
   }
 
@@ -74,5 +74,13 @@ export default class LandlordService {
     // 删除redis里面的key缓存
     await this.redisService.del(phone);
     return await this.userLandlordDao.updateUser(phone, updateInfo);
+  }
+
+  /**
+   * 通过用户id列表获取用户信息列表
+   * @param ids
+   */
+  async getUsersByIds(ids: Array<number>) {
+    return await this.userLandlordDao.getUsersByIds(ids);
   }
 }

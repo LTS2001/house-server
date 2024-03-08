@@ -1,14 +1,14 @@
-import {Inject, Provide} from "@midwayjs/core";
-import {AddressDao} from "../../dao/house/AddressDao";
-import {InfoDao} from "../../dao/house/InfoDao";
-import {houseAddressTableField, houseInfoTableField} from "../../constant/houseConstant";
-import {UserLandlord} from "../../entities/UserLandlord";
-import {AddHouseReq, UpdateHouseReq} from "../../dto/HouseInfo";
-import {HouseAddress} from "../../entities/HouseAddress";
-import {HouseInfo} from "../../entities/HouseInfo";
-import {IHouseInfo} from "../../typings/house/info";
-import {BusinessException} from "../../exception/BusinessException";
-import {ResponseCode} from "../../common/ResponseFormat";
+import { Inject, Provide } from '@midwayjs/core';
+import { AddressDao } from '../../dao/house/AddressDao';
+import { InfoDao } from '../../dao/house/InfoDao';
+import { houseAddressTableField, houseInfoTableField } from '../../constant/houseConstant';
+import { UserLandlord } from '../../entities/UserLandlord';
+import { AddHouseReq, UpdateHouseReq } from '../../dto/HouseInfo';
+import { HouseAddress } from '../../entities/HouseAddress';
+import { HouseInfo } from '../../entities/HouseInfo';
+import { IHouseInfo } from '../../typings/house/info';
+import { BusinessException } from '../../exception/BusinessException';
+import { ResponseCode } from '../../common/ResponseFormat';
 
 @Provide()
 export class InfoService {
@@ -26,12 +26,12 @@ export class InfoService {
   async addHouseInfo(user: UserLandlord, house: AddHouseReq) {
     // 处理house_address表字段
     const {addressDetail} = house;
-    const addressArr = addressDetail.split(/(省|市|区|县)/)
+    const addressArr = addressDetail.split(/(省|市|区|县)/);
     const houseAddressTable = new HouseAddress();
     Object.keys(house).forEach(key => {
       if (houseAddressTableField.includes(key))
         houseAddressTable[key] = house[key];
-    })
+    });
     houseAddressTable.provinceName = addressArr[0] + addressArr[1];
     houseAddressTable.cityName = addressArr[2] + addressArr[3];
     houseAddressTable.areaName = addressArr[4] + addressArr[5];
@@ -45,7 +45,7 @@ export class InfoService {
       if (houseInfoTableField.includes(key)) {
         houseInfoTable[key] = house[key];
       }
-    })
+    });
     houseInfoTable.landlordId = user.id;
     houseInfoTable.addressId = houseAddress.id;
     // 添加房屋信息表数据
@@ -65,7 +65,7 @@ export class InfoService {
     Object.keys(house).forEach(key => {
       if (houseAddressTableField.includes(key))
         houseAddressTable[key] = house[key];
-    })
+    });
     const addressArr = addressDetail.match(/^(.*?[省市自治区壮回藏维吉])?(.*?[市区县])?(.*?[市区县])?(.*?)$/);
     if (!addressArr) throw new BusinessException(ResponseCode.PARAMS_ERROR, '地址格式错误！');
     houseAddressTable.provinceName = addressArr[1];
@@ -82,7 +82,7 @@ export class InfoService {
       if (houseInfoTableField.includes(key)) {
         houseInfoTable[key] = house[key];
       }
-    })
+    });
     // 查询房屋信息
     const [houseInfo] = await this.infoDao.getHouseInfoByHouseIds([house.houseId]);
     // 更新房屋信息
@@ -92,7 +92,7 @@ export class InfoService {
       ...updateHouseAddress,
       houseId: updateHouseInfo.id,
       addressId: updateHouseAddress.id,
-    }
+    };
 
     return resultHouseInfos;
   }
@@ -105,7 +105,7 @@ export class InfoService {
     const houseInfos = await this.infoDao.getHouseInfoByUserId(userId);
     const houseAddresses = await this.addressDao.getHouseAddress(
       houseInfos.map(({addressId}) => addressId)
-    )
+    );
     const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
     houseInfos.forEach(item => {
       const obj: any = {
@@ -113,10 +113,10 @@ export class InfoService {
         ...item,
         houseId: item.id,
         addressId: item.addressId
-      }
+      };
       delete obj.id;
       infoArr.push(obj as IHouseInfo.IResultHouseInfos);
-    })
+    });
     return infoArr;
   }
 
@@ -131,5 +131,27 @@ export class InfoService {
     houseInfo.headImg = JSON.stringify(JSON.parse(houseInfo.headImg).filter((i: string) => i !== imgName));
     // 保存房屋信息
     return await this.infoDao.updateHouseInfo(houseInfo);
+  }
+
+  /**
+   * 分页获取全部房屋
+   */
+  async getHouseInfoByPage() {
+    const houseInfos = await this.infoDao.getHousesByPage();
+    const houseAddresses = await this.addressDao.getHouseAddress(
+      houseInfos.map(({addressId}) => addressId)
+    );
+    const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
+    houseInfos.forEach(item => {
+      const obj: any = {
+        ...houseAddresses.find(i => i.id === item.addressId),
+        ...item,
+        houseId: item.id,
+        addressId: item.addressId
+      };
+      delete obj.id;
+      infoArr.push(obj as IHouseInfo.IResultHouseInfos);
+    });
+    return infoArr;
   }
 }

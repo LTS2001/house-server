@@ -33,6 +33,7 @@
     "test"
   ],
   "include": [
-    "src/typings/*.d.ts"
+    "src/typings/*.d.ts",
+    "./src"
   ]
 }

@@ -17,6 +17,7 @@
     "@midwayjs/redis": "^3.13.5",
     "@midwayjs/upload": "3",
     "@midwayjs/validate": "^3.12.0",
+    "@midwayjs/ws": "3",
     "crypto-js": "^4.1.1",
     "mysql2": "^3.6.5",
     "typeorm": "^0.3.17"
