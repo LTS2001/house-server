@@ -2,9 +2,9 @@ import { Inject, Middleware } from '@midwayjs/core';
 import { Context, NextFunction } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { RedisService } from '@midwayjs/redis';
-import AuthUtil from '../utils/AuthUtil';
-import { BusinessException } from '../exception/BusinessException';
-import { ResponseCode } from '../common/ResponseFormat';
+import { AuthUtil } from '@/utils/AuthUtil';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
 
 @Middleware()
 export class JwtMiddleware {

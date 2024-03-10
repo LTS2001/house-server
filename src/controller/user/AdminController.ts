@@ -1,27 +1,25 @@
-import {Body, Controller, Del, Get, Inject, Post, Put, Query} from "@midwayjs/core";
-import {LoginReq} from "../../dto/user/admin/LoginReq";
-import {AddUserReq} from "../../dto/user/admin/AddUserReq";
-import AdminService from "../../service/user/AdminService";
-import {BusinessException} from "@/exception/BusinessException";
-import {ResponseCode} from "@/common/ResponseFormat";
-import {ResultUtils} from "@/common/ResultUtils";
-import {UpdateUserReq} from "../../dto/user/admin/UpdateUserReq";
-import {ValidateUtil} from "../../utils/ValidateUtil";
-import {Context} from "@midwayjs/koa";
-import {Role} from "../../decorator/role";
-import {UserAdminConstant} from "../../constant/userConstant";
-import {SessionMiddleware} from "../../middleware/SessionMiddleware";
+import { Body, Controller, Del, Get, Inject, Post, Put, Query } from '@midwayjs/core';
+import { AddAdminReq, LoginReq, UpdateAdminReq } from '@/dto/user/AdminDto';
+import { AdminService } from '@/service/user/AdminService';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
+import { ResultUtils } from '@/common/ResultUtils';
+import { ValidateUtil } from '@/utils/ValidateUtil';
+import { Context } from '@midwayjs/koa';
+import { Role } from '@/decorator/role';
+import { UserAdminConstant } from '@/constant/userConstant';
+import { SessionMiddleware } from '@/middleware/SessionMiddleware';
 
-@Controller('/user/admin')
+@Controller('/admin')
 export class AdminController {
   @Inject()
   ctx: Context;
   @Inject()
-  userAdminService: AdminService;
+  adminService: AdminService;
 
 
   /**
-   * 用户登录
+   * 管理员登录
    * @param loginReq
    */
   @Post('/login')
@@ -35,83 +33,77 @@ export class AdminController {
     if (!ValidateUtil.validatePassword(password)) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码必须包含大小写字母和数字，且在6~18位之间！');
     }
-    const id = await this.userAdminService.login(phone, password);
-    return new ResultUtils().success({id});
+    return new ResultUtils().success(await this.adminService.login(phone, password));
   }
 
   /**
-   * 添加用户
-   * @param addUserReq
+   * 添加管理员
+   * @param addAdminReq
    */
   @Post('/', {middleware: [SessionMiddleware]})
   @Role(UserAdminConstant.SuperAdminRole)
-  async addUser(@Body() addUserReq: AddUserReq) {
+  async addAdmin(@Body() addAdminReq: AddAdminReq) {
     // 校验手机号是否合法
-    if (!ValidateUtil.validatePhone(addUserReq.phone)) {
+    if (!ValidateUtil.validatePhone(addAdminReq.phone)) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
     }
     // 校验密码
-    if (!ValidateUtil.validatePassword(addUserReq.password)) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, "密码必须包含大小写字母和数字，且在6~18位之间！");
+    if (!ValidateUtil.validatePassword(addAdminReq.password)) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码必须包含大小写字母和数字，且在6~18位之间！');
     }
-    if (addUserReq.password !== addUserReq.checkPassword) {
+    if (addAdminReq.password !== addAdminReq.checkPassword) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '两次输入的密码不一致！');
     }
-    // 剔除checkPassword属性
-    const {checkPassword, ...addUserObj} = addUserReq;
-    const userId = await this.userAdminService.addUser(addUserObj);
+    const userId = await this.adminService.addAdmin(addAdminReq);
     return new ResultUtils().success({id: userId});
   }
 
   /**
-   * 删除用户
+   * 删除管理员
    * @param phone
    */
   @Del('/')
-  async delUser(@Query('phone') phone: string) {
+  async delAdmin(@Query('phone') phone: string) {
     const flag = ValidateUtil.validatePhone(phone);
     if (!flag) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
     }
-    await this.userAdminService.delUser(phone);
-    return new ResultUtils().success(null)
+    return new ResultUtils().success(await this.adminService.delAdmin(phone));
   }
 
   /**
-   * 更新用户
-   * @param updateUserReq
+   * 更新管理员
+   * @param updateAdminReq
    */
   @Put('/', {middleware: [SessionMiddleware]})
   @Role(UserAdminConstant.SuperAdminRole)
-  async updateUser(@Body() updateUserReq: UpdateUserReq) {
+  async updateAdmin(@Body() updateAdminReq: UpdateAdminReq) {
     // 校验手机号是否合法
-    if (!ValidateUtil.validatePhone(updateUserReq.phone)) {
+    if (!ValidateUtil.validatePhone(updateAdminReq.phone)) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
     }
     // 校验密码
-    if (!ValidateUtil.validatePassword(updateUserReq.newPassword)) {
+    if (!ValidateUtil.validatePassword(updateAdminReq.newPassword)) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码必须包含大小写字母和数字，且在6~18位之间！');
     }
-    if (updateUserReq.newPassword !== updateUserReq.checkPassword) {
+    if (updateAdminReq.newPassword !== updateAdminReq.checkPassword) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '两次输入的密码不一致！');
     }
-    const {checkPassword, ...updateUserObj} = updateUserReq;
-    const userId = await this.userAdminService.updateUser(updateUserObj);
+    const userId = await this.adminService.updateAdmin(updateAdminReq);
     return new ResultUtils().success({id: userId});
   }
 
   /**
-   * 查询用户
+   * 查询管理员
    * @param phone
    */
   @Get('/', {middleware: [SessionMiddleware]})
-  async getUser(@Query('phone') phone: string) {
+  async getAdmin(@Query('phone') phone: string) {
     const flag = ValidateUtil.validatePhone(phone);
     if (!flag) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
     }
-    const userAdmin = await this.userAdminService.getUser(phone);
-    return new ResultUtils().success(userAdmin);
+    return new ResultUtils().success(await this.adminService.getAdmin(phone));
   }
 }
 

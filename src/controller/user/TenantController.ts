@@ -1,24 +1,24 @@
-import { Body, Controller, Files, Get, Inject, Post, Put } from '@midwayjs/core';
-import TenantService from 'src/service/user/TenantService';
+import { Body, Controller, File, Get, Inject, Post, Put } from '@midwayjs/core';
+import { TenantService } from 'src/service/user/TenantService';
 import { ValidateUtil } from '@/utils/ValidateUtil';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
 import { ResultUtils } from '@/common/ResultUtils';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
-import AuthUtil from '@/utils/AuthUtil';
-import { UserTenant } from '@/entities/UserTenant';
+import { AuthUtil } from '@/utils/AuthUtil';
+import { Tenant } from '@/entities/Tenant';
 import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
-import { UpdateUserReq } from '@/dto/user/tenant/UpdateUserReq';
+import { UpdateTenantReq } from '@/dto/user/TenantDto';
 
-@Controller('/user/tenant')
+@Controller('/tenant')
 export class TenantController {
   @Inject()
   ctx: Context;
   @Inject()
   jwtService: JwtService;
   @Inject()
-  userTenantService: TenantService;
+  tenantService: TenantService;
 
   /**
    * 登录
@@ -28,41 +28,28 @@ export class TenantController {
   async login(@Body('phone') phone: string) {
     const flag = ValidateUtil.validatePhone(phone);
     if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    const userTenant = await this.userTenantService.login(phone);
-    return new ResultUtils().success(userTenant);
+    const tenant = await this.tenantService.login(phone);
+    return new ResultUtils().success(tenant);
   }
 
   /**
-   * 获取当前用户信息
+   * 获取当前租客信息
    */
   @Get('/', {middleware: [JwtMiddleware]})
-  async getUser() {
+  async getTenant() {
     const decryptPhone = await new AuthUtil().getUserFromToken(this.ctx, this.jwtService);
-    const userTenant = await this.userTenantService.getUser(decryptPhone);
-    return new ResultUtils().success<UserTenant>(userTenant);
+    const tenant = await this.tenantService.getTenant(decryptPhone);
+    return new ResultUtils().success<Tenant>(tenant);
   }
 
   /**
-   * 更新用户头像
-   */
-  @Post('/headImg', {middleware: [JwtMiddleware]})
-  async updateUserHeadImg(@Files() files: any) {
-    const imgUrlArr = files[0].data?.split('\\');
-    const imgUrl = imgUrlArr[imgUrlArr.length - 1];
-    const {phone} = this.ctx.user;
-    const url = await this.userTenantService.updateHeadImg(phone, imgUrl);
-    return new ResultUtils().success<string>(url);
-  }
-
-
-  /**
-   * 更新用户信息
+   * 更新租客信息
    */
   @Put('/', {middleware: [JwtMiddleware]})
-  async updateUser(@Body() updateUserReq: UpdateUserReq) {
+  async updateUser(@Body() updateUserReq: UpdateTenantReq) {
     const {phone} = this.ctx.user;
-    const userTenant = await this.userTenantService.updateUser(phone, updateUserReq);
-    return new ResultUtils().success<UserTenant>(userTenant);
+    const tenant = await this.tenantService.updateTenant(phone, updateUserReq);
+    return new ResultUtils().success<Tenant>(tenant);
   }
 
   /**
@@ -71,7 +58,19 @@ export class TenantController {
   @Get('/lease', {middleware: [JwtMiddleware]})
   async getUserLeaseHouse() {
     const {id} = this.ctx.user;
-    const leaseHouse = await this.userTenantService.getUserLeaseHouse(id);
+    const leaseHouse = await this.tenantService.getUserLeaseHouse(id);
     return new ResultUtils().success(leaseHouse);
+  }
+
+  /**
+   * 更新租客头像
+   */
+  @Post('/headImg', {middleware: [JwtMiddleware]})
+  async updateTenantHeadImg(@File() file: any) {
+    const imgUrlArr = file.data?.split('\\');
+    const imgUrl = imgUrlArr[imgUrlArr.length - 1];
+    const {phone} = this.ctx.user;
+    const url = await this.tenantService.updateTenantHeadImg(phone, imgUrl);
+    return new ResultUtils().success<string>(url);
   }
 }

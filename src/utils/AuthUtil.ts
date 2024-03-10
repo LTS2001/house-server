@@ -1,12 +1,11 @@
-import {Context} from "@midwayjs/koa";
-import {httpError} from "@midwayjs/core";
-import {CryptoUtil} from "./CryptoUtil";
-import {BusinessException} from "../exception/BusinessException";
-import {ResponseCode} from "../common/ResponseFormat";
-import {JwtService} from "@midwayjs/jwt";
+import { Context } from '@midwayjs/koa';
+import { httpError } from '@midwayjs/core';
+import { CryptoUtil } from './CryptoUtil';
+import { BusinessException } from '../exception/BusinessException';
+import { ResponseCode } from '../common/ResponseFormat';
+import { JwtService } from '@midwayjs/jwt';
 
-export default class AuthUtil {
-
+export class AuthUtil {
 
   /**
    * 从Token获取用户信息
@@ -31,7 +30,7 @@ export default class AuthUtil {
         const decryptPhone = CryptoUtil.decryptStr(tokenInfo.phone);
         return decryptPhone;
       } catch (error) {
-        console.info(error)
+        console.info(error);
         throw new BusinessException(ResponseCode.NOT_LOGIN_ERROR);
       }
     } else {

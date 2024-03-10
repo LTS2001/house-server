@@ -1,84 +1,84 @@
 import { InjectEntityModel } from '@midwayjs/orm';
-import { UserLandlord } from '../../entities/UserLandlord';
+import { Landlord } from '@/entities/Landlord';
 import { Repository } from 'typeorm';
 import { Provide } from '@midwayjs/core';
-import { UpdateUserReq } from '../../dto/user/landlord/UpdateUserReq';
 
 @Provide()
 export class LandlordDao {
-  @InjectEntityModel(UserLandlord)
-  private userLandlordModel: Repository<UserLandlord>;
+  @InjectEntityModel(Landlord)
+  private landlordModel: Repository<Landlord>;
 
   /**
-   * 通过用户手机号获取用户信息
+   * 通过手机号获取房东信息
    * @param phone 手机号
-   * @return UserLandlord 实体对象
+   * @return Landlord 实体对象
    */
-  async getUserByPhone(phone: string): Promise<UserLandlord | null> {
-    return await this.userLandlordModel.findOne({
+  async getLandlordByPhone(phone: string) {
+    return await this.landlordModel.findOne({
       where: {phone}
     });
   }
 
   /**
-   * 添加用户
-   * @param phone 手机号
-   * @return UserLandlord 实体对象
+   * 添加房东
+   * @param landlordObj 手机号
+   * @return Landlord 实体对象
    */
-  async addUser(phone: string): Promise<UserLandlord> {
-    const userLandlord = new UserLandlord();
-    userLandlord.phone = phone;
-    userLandlord.name = '良心房东';
-    return await this.userLandlordModel.save(userLandlord);
+  async addLandlord(landlordObj: Landlord): Promise<Landlord> {
+    const landlord = new Landlord();
+    Object.keys(landlordObj).forEach(key => {
+      landlord[key] = landlordObj[key];
+    });
+    return await this.landlordModel.save(landlord);
   }
 
   /**
-   * 更新用户头像
+   * 更新房东头像
    * @param phone 用户手机号
    * @param imgUrl 图片url
-   * @return UserLandlord 实体对象
+   * @return Landlord 实体对象
    */
-  async updateUserHeadImg(phone: string, imgUrl: string) {
-    const userLandlord = await this.userLandlordModel.findOne({
+  async updateLandlordHeadImg(phone: string, imgUrl: string) {
+    const landlord = await this.landlordModel.findOne({
       where: {phone}
     });
-    userLandlord.headImg = imgUrl;
-    return await this.userLandlordModel.save(userLandlord);
+    landlord.headImg = imgUrl;
+    return await this.landlordModel.save(landlord);
   }
 
   /**
-   * 获取用户
+   * 获取房东
    * @param phone 手机号
-   * @return UserLandlord 实体对象
+   * @return Landlord 实体对象
    */
-  async getUser(phone: string) {
-    return await this.userLandlordModel.findOne({
+  async getLandlord(phone: string) {
+    return await this.landlordModel.findOne({
       where: {phone}
     });
   }
 
   /**
-   * 更新用户信息
+   * 更新房东信息
    * @param phone 手机号
-   * @param updateUserInfo 更新的用户信息
+   * @param landlordObj 更新的房东信息
    */
-  async updateUser(phone: string, updateUserInfo: UpdateUserReq) {
-    const userLandlord = await this.userLandlordModel.findOne({
+  async updateLandlord(phone: string, landlordObj: Landlord) {
+    const landlord = await this.landlordModel.findOne({
       where: {phone}
     });
-    Object.keys(updateUserInfo).forEach(item => {
-      userLandlord[item] = updateUserInfo[item];
+    Object.keys(landlordObj).forEach(item => {
+      landlord[item] = landlordObj[item];
     });
-    return await this.userLandlordModel.save(userLandlord);
+    return await this.landlordModel.save(landlord);
   }
 
   /**
-   * 通过用户id列表获取用户信息列表
-   * @param ids
+   * 通过房东id列表获取房东信息列表
+   * @param LandlordIds
    */
-  async getUsersByIds(ids: Array<number>) {
-    return await this.userLandlordModel.find({
-      where: ids.map(id => ({id}))
+  async getLandlordByIds(LandlordIds: Array<number>) {
+    return await this.landlordModel.find({
+      where: LandlordIds.map(id => ({id}))
     });
   }
 }

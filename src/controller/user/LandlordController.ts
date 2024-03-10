@@ -1,24 +1,24 @@
 import { Body, Controller, Files, Get, Inject, Post, Put, Query } from '@midwayjs/core';
-import { ValidateUtil } from '../../utils/ValidateUtil';
-import { BusinessException } from '../../exception/BusinessException';
-import { ResponseCode } from '../../common/ResponseFormat';
-import LandlordService from '../../service/user/LandlordService';
-import { ResultUtils } from '../../common/ResultUtils';
+import { ValidateUtil } from '@/utils/ValidateUtil';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
+import { LandlordService } from '@/service/user/LandlordService';
+import { ResultUtils } from '@/common/ResultUtils';
 import { Context } from '@midwayjs/koa';
-import { UserLandlord } from '../../entities/UserLandlord';
-import { JwtMiddleware } from '../../middleware/JwtMiddleware';
+import { Landlord } from '@/entities/Landlord';
+import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { JwtService } from '@midwayjs/jwt';
-import AuthUtil from '../../utils/AuthUtil';
-import { UpdateUserReq } from '../../dto/user/landlord/UpdateUserReq';
+import { AuthUtil } from '@/utils/AuthUtil';
+import { LandlordDto } from '@/dto/user/LandlordDto';
 
-@Controller('/user/landlord')
+@Controller('/landlord')
 export class LandlordController {
   @Inject()
   ctx: Context;
   @Inject()
   jwtService: JwtService;
   @Inject()
-  userLandlordService: LandlordService;
+  landlordService: LandlordService;
 
   /**
    * 登录
@@ -28,50 +28,50 @@ export class LandlordController {
   async login(@Body('phone') phone: string) {
     const flag = ValidateUtil.validatePhone(phone);
     if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    const userLandlord = await this.userLandlordService.login(phone);
-    return new ResultUtils().success(userLandlord);
+    const landlord = await this.landlordService.login(phone);
+    return new ResultUtils().success(landlord);
   }
 
   /**
-   * 获取当前用户信息
+   * 获取当前房东信息
    */
   @Get('/', {middleware: [JwtMiddleware]})
   async getUser() {
     const decryptPhone = await new AuthUtil().getUserFromToken(this.ctx, this.jwtService);
-    const userLandlord = await this.userLandlordService.getUser(decryptPhone);
-    return new ResultUtils().success<UserLandlord>(userLandlord);
+    const landlord = await this.landlordService.getLandlord(decryptPhone);
+    return new ResultUtils().success<Landlord>(landlord);
   }
 
   /**
-   * 更新用户信息
+   * 更新房东信息
    */
   @Put('/', {middleware: [JwtMiddleware]})
-  async updateUser(@Body() updateUserReq: UpdateUserReq) {
+  async updateUser(@Body() updateLandlord: LandlordDto) {
     const {phone} = this.ctx.user;
-    const userLandlord = await this.userLandlordService.updateUser(phone, updateUserReq);
-    return new ResultUtils().success<UserLandlord>(userLandlord);
+    const landlord = await this.landlordService.updateLandlord(phone, updateLandlord);
+    return new ResultUtils().success<Landlord>(landlord);
   }
 
   /**
-   * 更新用户头像
+   * 更新房东头像
    */
   @Post('/headImg', {middleware: [JwtMiddleware]})
   async updateUserHeadImg(@Files() files: any) {
     const imgUrlArr = files[0].data?.split('\\');
     const imgUrl = imgUrlArr[imgUrlArr.length - 1];
     const {phone} = this.ctx.user;
-    const url = await this.userLandlordService.updateHeadImg(phone, imgUrl);
+    const url = await this.landlordService.updateHeadImg(phone, imgUrl);
     return new ResultUtils().success<string>(url);
   }
 
   /**
-   * 获取用户信息
-   * @param landlordIds 用户id列表
+   * 获取房东信息
+   * @param landlordIds 房东id列表
    */
   @Get('/list')
   async getUsersByIds(@Query('ids') landlordIds: string) {
     const idsStr = landlordIds.split(',');
     const idsNum = idsStr.map(id => (Number(id)));
-    return new ResultUtils().success(await this.userLandlordService.getUsersByIds([...new Set(idsNum)]));
+    return new ResultUtils().success(await this.landlordService.getLandlordByIds([...new Set(idsNum)]));
   }
 }

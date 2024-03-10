@@ -1,21 +1,20 @@
 import { Provide } from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { Repository } from 'typeorm';
-import { UserTenant } from '@/entities/UserTenant';
-import { UpdateUserReq } from '@/dto/user/tenant/UpdateUserReq';
+import { Tenant } from '@/entities/Tenant';
 
 @Provide()
 export class TenantDao {
-  @InjectEntityModel(UserTenant)
-  private userTenantModel: Repository<UserTenant>;
+  @InjectEntityModel(Tenant)
+  private tenantModel: Repository<Tenant>;
 
   /**
    * 通过用户手机号获取用户信息
    * @param phone 手机号
-   * @return UserTenant 实体对象
+   * @return Tenant 实体对象
    */
-  async getUserByPhone(phone: string) {
-    return await this.userTenantModel.findOne({
+  async getTenantByPhone(phone: string) {
+    return await this.tenantModel.findOne({
       where: {phone}
     });
   }
@@ -23,42 +22,43 @@ export class TenantDao {
   /**
    * 添加用户
    * @param phone 手机号
-   * @return UserTenant 实体对象
+   * @return Tenant 实体对象
    */
-  async addUser(phone: string): Promise<UserTenant> {
-    const userTenant = new UserTenant();
-    userTenant.phone = phone;
-    userTenant.name = '单身租客';
-    userTenant.headImg = 'male.png';
-    return await this.userTenantModel.save(userTenant);
+  async addTenant(tenantObj: Tenant): Promise<Tenant> {
+    const tenant = new Tenant();
+    Object.keys(tenantObj).forEach(key => {
+      tenant[key] = tenantObj[key];
+    });
+    return await this.tenantModel.save(tenant);
   }
 
   /**
-   * 更新用户头像
+   * 更新租客头像
    * @param phone 用户手机号
    * @param imgUrl 图片url
-   * @return UserTenant 实体对象
+   * @return Tenant 实体对象
    */
-  async updateUserHeadImg(phone: string, imgUrl: string) {
-    const userTenant = await this.userTenantModel.findOne({
+  async updateTenantHeadImg(phone: string, imgUrl: string) {
+    const tenant = await this.tenantModel.findOne({
       where: {phone}
     });
-    userTenant.headImg = imgUrl;
-    return await this.userTenantModel.save(userTenant);
+    tenant.headImg = imgUrl;
+    return await this.tenantModel.save(tenant);
   }
 
   /**
-   * 更新用户信息
+   * 更新租客信息
    * @param phone 手机号
-   * @param updateUserInfo 更新的用户信息
+   * @param updateTenant 更新的租客信息
+   * @return Tenant
    */
-  async updateUser(phone: string, updateUserInfo: UpdateUserReq) {
-    const userTenant = await this.userTenantModel.findOne({
+  async updateTenant(phone: string, updateTenant: Tenant) {
+    const tenant = await this.tenantModel.findOne({
       where: {phone}
     });
-    Object.keys(updateUserInfo).forEach(item => {
-      userTenant[item] = updateUserInfo[item];
+    Object.keys(updateTenant).forEach(item => {
+      tenant[item] = updateTenant[item];
     });
-    return await this.userTenantModel.save(userTenant);
+    return await this.tenantModel.save(tenant);
   }
 }
