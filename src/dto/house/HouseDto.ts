@@ -14,7 +14,7 @@ class BaseHouseReq {
   price: number;
 
   @Rule(RuleStrRequired)
-  headImg: string;
+  houseImg: string;
 
   @Rule(RuleNumRequired)
   area: number;

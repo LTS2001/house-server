@@ -1,8 +1,8 @@
-import { Rule, RuleType } from '@midwayjs/validate';
+import { OmitDto, Rule, RuleType } from '@midwayjs/validate';
 
 const RuleNumRequired = RuleType.number().required();
 
-export class AddLeaseReq {
+export class InitiateLeaseReq {
   @Rule(RuleNumRequired)
   houseId: number;
 
@@ -13,6 +13,11 @@ export class AddLeaseReq {
   tenantId: number;
 }
 
-export class GetLeaseReq extends AddLeaseReq {
+export class GetLeaseReq extends OmitDto(InitiateLeaseReq, ['landlordId']) {
 
+}
+
+export class UpdateLeaseReq extends InitiateLeaseReq {
+  @Rule(RuleNumRequired)
+  status: number;
 }

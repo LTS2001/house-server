@@ -9,7 +9,7 @@ import { Landlord } from '@/entities/Landlord';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { JwtService } from '@midwayjs/jwt';
 import { AuthUtil } from '@/utils/AuthUtil';
-import { LandlordDto } from '@/dto/user/LandlordDto';
+import { LandlordDto, LoginLandlordReq } from '@/dto/user/LandlordDto';
 
 @Controller('/landlord')
 export class LandlordController {
@@ -25,10 +25,11 @@ export class LandlordController {
    * @param phone
    */
   @Post('/login')
-  async login(@Body('phone') phone: string) {
+  async login(@Body() loginReq: LoginLandlordReq) {
+    const {phone, password} = loginReq;
     const flag = ValidateUtil.validatePhone(phone);
     if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    const landlord = await this.landlordService.login(phone);
+    const landlord = await this.landlordService.login(phone, password);
     return new ResultUtils().success(landlord);
   }
 
@@ -73,5 +74,14 @@ export class LandlordController {
     const idsStr = landlordIds.split(',');
     const idsNum = idsStr.map(id => (Number(id)));
     return new ResultUtils().success(await this.landlordService.getLandlordByIds([...new Set(idsNum)]));
+  }
+
+  /**
+   * 获取房东的租客
+   */
+  @Get('/tenant', {middleware: [JwtMiddleware]})
+  async getTenantsByLandlordId() {
+    const landlord = this.ctx.user;
+    return new ResultUtils().success(await this.landlordService.getTenantsByLandlordId(landlord.id));
   }
 }

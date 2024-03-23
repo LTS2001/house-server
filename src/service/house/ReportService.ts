@@ -24,4 +24,29 @@ export class ReportService {
     houseReport.video = video;
     return await this.reportDao.addReport(houseReport);
   }
+
+  /**
+   * 通过租客id查询房屋维修记录
+   * @param tenantId
+   */
+  async getReportByTenantId(tenantId: number) {
+    return await this.reportDao.getReportByTenantId(tenantId);
+  }
+
+  /**
+   * 通过房东id查询房屋维修记录
+   * @param landlordId
+   */
+  async getReportByLandlordId(landlordId: number) {
+    return await this.reportDao.getReportByLandlordId(landlordId);
+  }
+
+  /**
+   * 更新维修状态
+   * @param reportId 维修id
+   * @param status 状态
+   */
+  async updateReportStatus(reportId: number, status: number) {
+    return await this.reportDao.updateReportStatus(reportId, status);
+  }
 }

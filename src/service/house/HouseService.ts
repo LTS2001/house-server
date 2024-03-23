@@ -151,4 +151,12 @@ export class HouseService {
     );
     return infoArr;
   }
+
+  /**
+   * 通过房屋id获取房屋列表
+   * @param houseIdList
+   */
+  async getHouseListByHouseId(houseIdList: number[]) {
+    return await this.houseDao.getHouseByHouseIds(houseIdList);
+  }
 }

@@ -13,9 +13,17 @@ export class AddReportReq {
   @Rule(RuleStrRequired)
   reason: string;
 
-  @Rule(RuleStrRequired)
+  @Rule(RuleType.string().empty(''))
   image: string;
 
-  @Rule(RuleStrRequired)
+  @Rule(RuleType.string().empty(''))
   video: string;
+}
+
+export class UpdateReportReq {
+  @Rule(RuleNumRequired)
+  reportId: number;
+  
+  @Rule(RuleNumRequired)
+  status: number;
 }

@@ -1,5 +1,20 @@
 import {Rule, RuleType} from "@midwayjs/validate";
 
+
+export class LoginLandlordReq {
+  /**
+   * 手机号
+   */
+  @Rule(RuleType.string().required())
+  phone: string;
+
+  /**
+   * 密码
+   */
+  @Rule(RuleType.string().required())
+  password: string;
+}
+
 export class LandlordDto {
 
   /**

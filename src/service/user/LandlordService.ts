@@ -6,6 +6,11 @@ import { Context } from '@midwayjs/koa';
 import { RedisService } from '@midwayjs/redis';
 import { JwtService } from '@midwayjs/jwt';
 import { LandlordDto } from '@/dto/user/LandlordDto';
+import { LANDLORD_HEAD_IMG, LANDLORD_NAME } from '@/constant/userConstant';
+import { LeaseDao } from '@/dao/house/LeaseDao';
+import { TenantDao } from '@/dao/user/TenantDao';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
 
 @Provide()
 export class LandlordService {
@@ -17,14 +22,19 @@ export class LandlordService {
   private redisService: RedisService;
   @Inject()
   private jwtService: JwtService;
+  @Inject()
+  private leaseDao: LeaseDao;
+  @Inject()
+  private tenantDao: TenantDao;
 
 
   /**
    * 登录
    * @param phone 手机号
+   * @param password 密码
    * @return userLandlord 实体
    */
-  async login(phone: string) {
+  async login(phone: string, password: string) {
     let landlord: Landlord;
     // 检测用户是否已经注册，没有注册的，则直接进行注册
     landlord = await this.landlordDao.getLandlordByPhone(phone);
@@ -32,9 +42,12 @@ export class LandlordService {
     if (!landlord) {
       const landlordObj = new Landlord();
       landlordObj.phone = phone;
-      landlordObj.name = '单身房东';
-      landlordObj.headImg = 'male.png';
+      landlordObj.password = password;
+      landlordObj.name = LANDLORD_NAME;
+      landlordObj.headImg = LANDLORD_HEAD_IMG;
       landlord = await this.landlordDao.addLandlord(landlordObj);
+    } else {
+      if (landlord.password !== password) throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
@@ -80,8 +93,8 @@ export class LandlordService {
     await this.redisService.del(phone);
     const landlord = new Landlord();
     const {name, remark} = updateInfo;
-    if (!name) landlord.name = name;
-    if (!remark) landlord.remark = remark;
+    if (name) landlord.name = name;
+    if (remark) landlord.remark = remark;
     return await this.landlordDao.updateLandlord(phone, landlord);
   }
 
@@ -91,5 +104,14 @@ export class LandlordService {
    */
   async getLandlordByIds(landlordIds: Array<number>) {
     return await this.landlordDao.getLandlordByIds(landlordIds);
+  }
+
+  /**
+   * 通过房东id租客信息
+   * @param landlordId
+   */
+  async getTenantsByLandlordId(landlordId: number) {
+    const lease = await this.leaseDao.getLeaseByLandlordId(landlordId);
+    return await this.tenantDao.getTenantByIds(lease.map(l => (l.tenantId)));
   }
 }

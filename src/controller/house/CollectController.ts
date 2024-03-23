@@ -6,7 +6,7 @@ import { ResultUtils } from '@/common/ResultUtils';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
 
-@Controller('/collect', {middleware: [JwtMiddleware]})
+@Controller('/collect')
 export class CollectController {
   @Inject()
   private collectService: CollectService;
@@ -15,7 +15,7 @@ export class CollectController {
    * 更改收藏状态（收藏/取消收藏）
    * @param changeCollectReq
    */
-  @Put('/')
+  @Put('/', {middleware: [JwtMiddleware]})
   async changeCollectStatus(@Body() changeCollectReq: ChangeCollectReq) {
     return new ResultUtils().success(await this.collectService.changeCollectStatus(changeCollectReq));
   }
@@ -24,7 +24,7 @@ export class CollectController {
    * 获取收藏状态
    * @param getCollectReq
    */
-  @Get('/')
+  @Get('/', {middleware: [JwtMiddleware]})
   async getCollectStatus(@Query() getCollectReq: GetCollectReq) {
     return new ResultUtils().success(await this.collectService.getCollectStatus(getCollectReq));
   }

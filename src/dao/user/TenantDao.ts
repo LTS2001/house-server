@@ -61,4 +61,14 @@ export class TenantDao {
     });
     return await this.tenantModel.save(tenant);
   }
+
+  /**
+   * 通过租客id列表获取租客信息
+   */
+  async getTenantByIds(tenantIdList: number[]) {
+    if (tenantIdList.length === 0) return [];
+    return await this.tenantModel.find({
+      where: tenantIdList.map(id => ({id}))
+    });
+  }
 }

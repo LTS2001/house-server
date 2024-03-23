@@ -17,7 +17,7 @@ export class CollectService {
     // 查找之前是否有收藏记录
     const linkCollect = await this.collectDao.getCollect(houseId, tenantId);
     if (linkCollect?.id) { // 进行更新操作
-      return await this.collectDao.updateCollectById(linkCollect.id, Number(!status));
+      return await this.collectDao.updateCollectById(linkCollect.id, Number(status));
     } else { // 进行插入操作
       const collect = new HouseCollect();
       collect.houseId = houseId;
@@ -46,8 +46,8 @@ export class CollectService {
       return new Promise(async (resolve) => {
         const res = await this.collectDao.getCollectHouseNum(houseId);
         resolve({
-          houseId: res['house_id'],
-          count: res['count(*)']
+          houseId,
+          count: Number(res['count(*)'])
         });
       });
     });

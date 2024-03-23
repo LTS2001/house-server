@@ -51,8 +51,9 @@ export class CollectDao {
   async getCollectHouseNum(houseId: number) {
     return await this.houseCollectModel
       .createQueryBuilder('c')
-      .select(['c.house_id', 'count(*)'])
+      .select(['count(*)'])
       .where('c.house_id = :id', {id: houseId})
+      .andWhere('c.status = 1')
       .getRawOne();
   }
 }

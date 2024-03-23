@@ -20,4 +20,39 @@ export class ReportDao {
     });
     return await this.reportModel.save(houseReport);
   }
+
+  /**
+   * 通过租客id查询房屋维修记录
+   * @param tenantId
+   */
+  async getReportByTenantId(tenantId: number) {
+    return await this.reportModel.find({
+      where: {tenantId},
+      order: {id: 'desc'}
+    });
+  }
+
+  /**
+   * 通过房东id查询房屋维修记录
+   * @param landlordId
+   */
+  async getReportByLandlordId(landlordId: number) {
+    return await this.reportModel.find({
+      where: {landlordId},
+      order: {id: 'desc'}
+    });
+  }
+
+  /**
+   * 更新维修状态
+   * @param id 维修id
+   * @param status 状态
+   */
+  async updateReportStatus(id: number, status: number) {
+    const report = await this.reportModel.findOne({
+      where: {id}
+    });
+    report.status = status;
+    return await this.reportModel.save(report);
+  }
 }

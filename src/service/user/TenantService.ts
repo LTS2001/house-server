@@ -7,12 +7,9 @@ import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { LeaseDao } from '@/dao/house/LeaseDao';
-import { HouseDao } from '@/dao/house/HouseDao';
-import { LandlordDao } from '@/dao/user/LandlordDao';
-import { AddressDao } from '@/dao/house/AddressDao';
-import { House } from '@/entities/House';
-import { Landlord } from '@/entities/Landlord';
-import { HouseAddress } from '@/entities/HouseAddress';
+import { TENANT_HEAD_IMG, TENANT_NAME } from '@/constant/userConstant';
+import { LeaseService } from '@/service/house/LeaseService';
+import { LEASE_TRAVERSE } from '@/constant/leaseConstant';
 
 @Provide()
 export class TenantService {
@@ -21,17 +18,14 @@ export class TenantService {
   @Inject()
   private redisService: RedisService;
   @Inject()
+  private leaseService: LeaseService;
+  @Inject()
   private tenantDao: TenantDao;
   @Inject()
   private jwtService: JwtService;
   @Inject()
   private leaseDao: LeaseDao;
-  @Inject()
-  private houseInfoDao: HouseDao;
-  @Inject()
-  private landlordDao: LandlordDao;
-  @Inject()
-  private addressDao: AddressDao;
+
 
   /**
    * 登录
@@ -46,8 +40,8 @@ export class TenantService {
     if (!tenant) {
       const tenantObj = new Tenant();
       tenantObj.phone = phone;
-      tenantObj.name = '单身租客';
-      tenantObj.headImg = 'male.png';
+      tenantObj.name = TENANT_NAME;
+      tenantObj.headImg = TENANT_HEAD_IMG;
       tenant = await this.tenantDao.addTenant(tenantObj);
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
@@ -104,61 +98,9 @@ export class TenantService {
    * @param tenantId 租客id
    */
   async getUserLeaseHouse(tenantId: number) {
-    // 查询租客租赁记录
+    // 查询租客租赁记录（已通过的）
     const leaseList = await this.leaseDao.getLeaseByTenantId(tenantId);
-    // 查询房屋信息
-    const houseList = await this.houseInfoDao.getHouseByHouseIds(
-      leaseList.map(lease => lease.houseId)
-    );
-    // 查询房东信息
-    const landlordList = await this.landlordDao.getLandlordByIds(
-      leaseList.map(lease => lease.landlordId)
-    );
-    // 查询房屋地址信息
-    const addressList = await this.addressDao.getHouseAddress(
-      houseList.map(house => house.addressId)
-    );
-
-    const resultList = leaseList.map((lease, idx) => {
-      const leaseId = lease.id;
-      delete lease.id;
-      // 当前的房屋信息
-      const house = JSON.parse(JSON.stringify(houseList[idx])) as House;
-      const houseId = house.id;
-      const houseName = house.name;
-      const houseImg = house.houseImg;
-      delete house.id;
-      delete house.name;
-      delete house.houseImg;
-      // 当前的房东信息
-      const landlord = JSON.parse(JSON.stringify(landlordList.find(l => l.id === house.landlordId))) as Landlord;
-      const landlordId = landlord.id;
-      const landlordName = landlord.name;
-      const landlordImg = landlord.headImg;
-      const landlordPhone = landlord.phone;
-      delete landlord.id;
-      delete landlord.name;
-      delete landlord.headImg;
-      delete landlord.phone;
-      // 当前的房屋地址信息
-      const address = JSON.parse(JSON.stringify(addressList.find(a => a.id === house.addressId))) as HouseAddress;
-      delete address.id;
-      return {
-        ...address,
-        ...house,
-        houseName,
-        houseImg,
-        ...landlord,
-        landlordName,
-        landlordImg,
-        landlordPhone,
-        ...lease,
-        leaseId,
-        landlordId,
-        houseId
-      };
-    });
-
-    return resultList;
+    const leaseTraverse = leaseList?.filter(l => l.status === LEASE_TRAVERSE);
+    return await this.leaseService.getHouseInfoByLeaseList(leaseTraverse);
   }
 }
