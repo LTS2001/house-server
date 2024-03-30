@@ -1,4 +1,4 @@
-import { Body, Controller, File, Get, Inject, Post, Put } from '@midwayjs/core';
+import { Body, Controller, File, Get, Inject, Post, Put, Query } from '@midwayjs/core';
 import { TenantService } from 'src/service/user/TenantService';
 import { ValidateUtil } from '@/utils/ValidateUtil';
 import { BusinessException } from '@/exception/BusinessException';
@@ -10,6 +10,7 @@ import { Tenant } from '@/entities/Tenant';
 import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
+import { ToolUtil } from '@/utils/ToolUtil';
 
 @Controller('/tenant')
 export class TenantController {
@@ -72,5 +73,14 @@ export class TenantController {
     const {phone} = this.ctx.user;
     const url = await this.tenantService.updateTenantHeadImg(phone, imgUrl);
     return new ResultUtils().success<string>(url);
+  }
+
+  /**
+   * 通过id列表获取租客信息
+   */
+  @Get('/list', {middleware: [JwtMiddleware]})
+  async getTenantByIdList(@Query('tenantIdList') tenantIdList: string) {
+    const ids = ToolUtil.splitIdList(tenantIdList);
+    return new ResultUtils().success(await this.tenantService.getTenantByIdList(ids));
   }
 }

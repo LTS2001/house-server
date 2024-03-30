@@ -4,8 +4,7 @@ import { AddHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
 import { HouseService } from '@/service/house/HouseService';
 import { ResultUtils } from '@/common/ResultUtils';
 import { Context } from '@midwayjs/koa';
-import { BusinessException } from '@/exception/BusinessException';
-import { ResponseCode } from '@/common/ResponseFormat';
+import { ToolUtil } from '@/utils/ToolUtil';
 
 @Controller('/house')
 export class HouseController {
@@ -83,14 +82,7 @@ export class HouseController {
    */
   @Get('/list', {middleware: [JwtMiddleware]})
   async getHouseListByHouseId(@Query('houseIdList') houseIdList: string) {
-    const list = houseIdList.split(',');
-    const ids = list.map(id => {
-      if (Boolean(Number(id))) {
-        return Number(id);
-      } else {
-        throw new BusinessException(ResponseCode.PARAMS_ERROR);
-      }
-    });
+    const ids = ToolUtil.splitIdList(houseIdList);
     return new ResultUtils().success(await this.houseService.getHouseListByHouseId(ids));
   }
 }

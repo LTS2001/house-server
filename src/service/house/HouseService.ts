@@ -8,6 +8,7 @@ import { HouseAddress } from '@/entities/HouseAddress';
 import { House } from '@/entities/House';
 import { IHouseInfo } from '@/typings/house/house';
 import { ToolUtil } from '@/utils/ToolUtil';
+import { LandlordDao } from '@/dao/user/LandlordDao';
 
 @Provide()
 export class HouseService {
@@ -15,6 +16,64 @@ export class HouseService {
   private addressDao: AddressDao;
   @Inject()
   private houseDao: HouseDao;
+  @Inject()
+  private landlordDao: LandlordDao;
+
+  /**
+   * 获取房屋详细信息通过两个id列表
+   * @param twoIdList
+   */
+  async getHouseByTwoIdList(twoIdList: Array<{ houseId: number, landlordId: number }>) {
+    // 查询房屋信息
+    const houseList = await this.houseDao.getHouseByHouseIds(
+      [...new Set(twoIdList.map(t => t.houseId))]
+    );
+    // 查询房东信息
+    const landlordList = await this.landlordDao.getLandlordByIds(
+      [...new Set(twoIdList.map(t => t.landlordId))]
+    );
+    // 查询房屋地址信息
+    const addressList = await this.addressDao.getHouseAddress(
+      [...new Set(houseList.map(house => house.addressId))]
+    );
+
+    return twoIdList.map((t) => {
+      // 当前的房屋信息
+      const house = JSON.parse(JSON.stringify(houseList.find(h => h.id === t.houseId))) as House;
+      const houseId = house.id;
+      const houseName = house.name;
+      const houseImg = house.houseImg;
+      delete house.id;
+      delete house.name;
+      delete house.houseImg;
+      // 当前的房东信息
+      const landlord = JSON.parse(JSON.stringify(landlordList.find(l => l.id === house.landlordId))) as Landlord;
+      const landlordId = landlord.id;
+      const landlordName = landlord.name;
+      const landlordImg = landlord.headImg;
+      const landlordPhone = landlord.phone;
+      delete landlord.id;
+      delete landlord.name;
+      delete landlord.headImg;
+      delete landlord.phone;
+      // 当前的房屋地址信息
+      const address = JSON.parse(JSON.stringify(addressList.find(a => a.id === house.addressId))) as HouseAddress;
+      delete address.id;
+      return {
+        ...address,
+        ...house,
+        houseName,
+        houseImg,
+        ...landlord,
+        landlordName,
+        landlordImg,
+        landlordPhone,
+        landlordId,
+        houseId
+      };
+    });
+
+  }
 
   /**
    * 添加房屋信息

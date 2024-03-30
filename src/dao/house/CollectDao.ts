@@ -56,4 +56,14 @@ export class CollectDao {
       .andWhere('c.status = 1')
       .getRawOne();
   }
+
+  /**
+   * 通过租客id获取收藏记录
+   * @param tenantId
+   */
+  async getCollectHouseByTenantId(tenantId: number) {
+    return await this.houseCollectModel.find({
+      where: {tenantId}
+    });
+  }
 }

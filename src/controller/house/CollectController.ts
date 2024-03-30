@@ -3,8 +3,7 @@ import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { ChangeCollectReq, GetCollectReq } from '@/dto/house/CollectDto';
 import { CollectService } from '@/service/house/CollectService';
 import { ResultUtils } from '@/common/ResultUtils';
-import { BusinessException } from '@/exception/BusinessException';
-import { ResponseCode } from '@/common/ResponseFormat';
+import { ToolUtil } from '@/utils/ToolUtil';
 
 @Controller('/collect')
 export class CollectController {
@@ -35,14 +34,16 @@ export class CollectController {
    */
   @Get('/num')
   async getCollectHouseNum(@Query('houseIdList') houseIdList: string) {
-    const list = houseIdList.split(',');
-    const ids = list.map(id => {
-      if (Boolean(Number(id))) {
-        return Number(id);
-      } else {
-        throw new BusinessException(ResponseCode.PARAMS_ERROR);
-      }
-    });
+    const ids = ToolUtil.splitIdList(houseIdList);
     return new ResultUtils().success(await this.collectService.getCollectHouseNum(ids));
+  }
+
+  /**
+   * 获取租客的收藏房屋
+   * @param tenantId
+   */
+  @Get('/tenant', {middleware: [JwtMiddleware]})
+  async getCollectHouseByTenantId(@Query('tenantId') tenantId: number) {
+    return new ResultUtils().success(await this.collectService.getCollectHouseByTenantId(tenantId));
   }
 }

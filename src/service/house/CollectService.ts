@@ -2,11 +2,14 @@ import { Inject, Provide } from '@midwayjs/core';
 import { CollectDao } from '@/dao/house/CollectDao';
 import { ChangeCollectReq, GetCollectReq } from '@/dto/house/CollectDto';
 import { HouseCollect } from '@/entities/HouseCollect';
+import { HouseService } from '@/service/house/HouseService';
 
 @Provide()
 export class CollectService {
   @Inject()
   private collectDao: CollectDao;
+  @Inject()
+  private houseService: HouseService;
 
   /**
    * 更改收藏状态（收藏/取消收藏）
@@ -52,5 +55,30 @@ export class CollectService {
       });
     });
     return Promise.all(promises);
+  }
+
+  /**
+   * 获取租客的收藏房屋
+   * @param tenantId
+   */
+  async getCollectHouseByTenantId(tenantId: number) {
+    const collectList = await this.collectDao.getCollectHouseByTenantId(tenantId);
+    const twoIdList = collectList.map(c => {
+      const {houseId, landlordId} = c;
+      return {
+        houseId,
+        landlordId,
+      };
+    });
+    const houseInfoList = await this.houseService.getHouseByTwoIdList(twoIdList);
+    return twoIdList.map(t => {
+      const houseInfo = houseInfoList.find(h => h.landlordId === t.landlordId && h.houseId === t.houseId);
+      const collect = collectList.find(c => c.landlordId === t.landlordId && c.houseId === t.houseId);
+      const collectId = collect.id;
+      delete collect.id;
+      return {
+        ...houseInfo, ...collect, collectId
+      };
+    });
   }
 }

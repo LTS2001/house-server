@@ -8,8 +8,8 @@ import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { LeaseDao } from '@/dao/house/LeaseDao';
 import { TENANT_HEAD_IMG, TENANT_NAME } from '@/constant/userConstant';
-import { LeaseService } from '@/service/house/LeaseService';
 import { LEASE_TRAVERSE } from '@/constant/leaseConstant';
+import { HouseService } from '@/service/house/HouseService';
 
 @Provide()
 export class TenantService {
@@ -18,7 +18,7 @@ export class TenantService {
   @Inject()
   private redisService: RedisService;
   @Inject()
-  private leaseService: LeaseService;
+  private houseService: HouseService;
   @Inject()
   private tenantDao: TenantDao;
   @Inject()
@@ -101,6 +101,30 @@ export class TenantService {
     // 查询租客租赁记录（已通过的）
     const leaseList = await this.leaseDao.getLeaseByTenantId(tenantId);
     const leaseTraverse = leaseList?.filter(l => l.status === LEASE_TRAVERSE);
-    return await this.leaseService.getHouseInfoByLeaseList(leaseTraverse);
+    const twoIdList = leaseTraverse.map(l => {
+      const {houseId, landlordId} = l;
+      return {
+        houseId,
+        landlordId,
+      };
+    });
+    const houseInfoList = await this.houseService.getHouseByTwoIdList(twoIdList);
+    return twoIdList.map(t => {
+      const houseInfo = houseInfoList.find(h => h.landlordId === t.landlordId && h.houseId === t.houseId);
+      const traverse = leaseTraverse.find(r => r.landlordId === t.landlordId && r.houseId === t.houseId);
+      const leaseId = traverse.id;
+      delete traverse.id;
+      return {
+        ...houseInfo, ...traverse, leaseId
+      };
+    });
+  }
+
+  /**
+   * 通过租客id获取租客信息
+   * @param tenantIdList
+   */
+  async getTenantByIdList(tenantIdList: number[]) {
+    return await this.tenantDao.getTenantByIds(tenantIdList);
   }
 }

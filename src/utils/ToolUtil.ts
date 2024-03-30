@@ -49,4 +49,20 @@ export class ToolUtil {
     seconds = seconds < 10 ? '0' + seconds : seconds;
     return `${ year }-${ month }-${ day } ${ hours }:${ minutes }:${ seconds }`;
   }
+
+  /**
+   * 分割id列表
+   * @param idList
+   */
+  static splitIdList(idList: string) {
+    const list = idList.split(',');
+    const ids = list.map(id => {
+      if (Boolean(Number(id))) {
+        return Number(id);
+      } else {
+        throw new BusinessException(ResponseCode.PARAMS_ERROR);
+      }
+    });
+    return ids;
+  }
 }

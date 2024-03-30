@@ -10,10 +10,7 @@ import { AddressDao } from '@/dao/house/AddressDao';
 import { LEASE_PENDING, LEASE_REFUND, LEASE_TRAVERSE } from '@/constant/leaseConstant';
 import { House } from '@/entities/House';
 import { HOUSE_FORRENT_RELEASED, HOUSE_LEASED } from '@/constant/houseConstant';
-import { Landlord } from '@/entities/Landlord';
-import { HouseAddress } from '@/entities/HouseAddress';
-import { LandlordDao } from '@/dao/user/LandlordDao';
-import { ToolUtil } from '@/utils/ToolUtil';
+import { HouseService } from '@/service/house/HouseService';
 
 @Provide()
 export class LeaseService {
@@ -26,67 +23,7 @@ export class LeaseService {
   @Inject()
   private addressDao: AddressDao;
   @Inject()
-  private landlordDao: LandlordDao;
-
-  /**
-   * 通过租赁列表获取房屋等一系列信息
-   * @param leaseList
-   */
-  async getHouseInfoByLeaseList(leaseList: HouseLease[]) {
-    // 查询房屋信息
-    const houseList = await this.houseDao.getHouseByHouseIds(
-      [...new Set(leaseList.map(lease => lease.houseId))]
-    );
-    // 查询房东信息
-    const landlordList = await this.landlordDao.getLandlordByIds(
-      [...new Set(leaseList.map(lease => lease.landlordId))]
-    );
-    // 查询房屋地址信息
-    const addressList = await this.addressDao.getHouseAddress(
-      [...new Set(houseList.map(house => house.addressId))]
-    );
-
-    return leaseList.map((lease, idx) => {
-      const leaseId = lease.id;
-      delete lease.id;
-      // 当前的房屋信息
-      const house = JSON.parse(JSON.stringify(houseList.find(h => h.id === lease.houseId))) as House;
-      const houseId = house.id;
-      const houseName = house.name;
-      const houseImg = house.houseImg;
-      delete house.id;
-      delete house.name;
-      delete house.houseImg;
-      // 当前的房东信息
-      const landlord = JSON.parse(JSON.stringify(landlordList.find(l => l.id === house.landlordId))) as Landlord;
-      const landlordId = landlord.id;
-      const landlordName = landlord.name;
-      const landlordImg = landlord.headImg;
-      const landlordPhone = landlord.phone;
-      delete landlord.id;
-      delete landlord.name;
-      delete landlord.headImg;
-      delete landlord.phone;
-      // 当前的房屋地址信息
-      const address = JSON.parse(JSON.stringify(addressList.find(a => a.id === house.addressId))) as HouseAddress;
-      delete address.id;
-      console.log(lease.id, ToolUtil.formatUtcTime(lease.updatedAt));
-      return {
-        ...address,
-        ...house,
-        houseName,
-        houseImg,
-        ...landlord,
-        landlordName,
-        landlordImg,
-        landlordPhone,
-        ...lease,
-        leaseId,
-        landlordId,
-        houseId
-      };
-    });
-  }
+  private houseService: HouseService;
 
   /**
    * 发起租赁申请
@@ -185,6 +122,22 @@ export class LeaseService {
     const leaseList = await this.leaseDao.getLeaseByTenantId(tenantId);
     // 找出已经退租的租赁记录
     const refundLease = leaseList?.filter(l => l.status === LEASE_REFUND);
-    return await this.getHouseInfoByLeaseList(refundLease);
+    const twoIdList = refundLease.map(refund => {
+      const {houseId, landlordId} = refund;
+      return {
+        houseId,
+        landlordId,
+      };
+    });
+    const houseInfoList = await this.houseService.getHouseByTwoIdList(twoIdList);
+    return twoIdList.map(t => {
+      const houseInfo = houseInfoList.find(h => h.landlordId === t.landlordId && h.houseId === t.houseId);
+      const refund = refundLease.find(r => r.landlordId === t.landlordId && r.houseId === t.houseId);
+      const leaseId = refund.id;
+      delete refund.id;
+      return {
+        ...houseInfo, ...refund, leaseId
+      };
+    });
   }
 }
