@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Inject, Post, Put, Query } from '@midwayjs/core';
-import { AddChatSessionReq, LeaveChatSessionReq } from '@/dto/chat/ChatDto';
+import { Body, Controller, Del, Get, Inject, Post, Put, Query } from '@midwayjs/core';
+import { AddChatSessionReq, DelChatSessionReq, LeaveChatSessionReq } from '@/dto/chat/ChatDto';
 import { ResultUtils } from '@/common/ResultUtils';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { ChatSessionService } from '@/service/chat/ChatSessionService';
@@ -16,6 +16,16 @@ export class ChatSessionController {
   async addChatSession(@Body() chatSessionReq: AddChatSessionReq) {
     const {senderId, receiverId} = chatSessionReq;
     return new ResultUtils().success(await this.chatSessionService.addChatSession(senderId, receiverId));
+  }
+
+  /**
+   * 删除一个会话
+   * @param delReq
+   */
+  @Del('/')
+  async delChatSession(@Body() delReq: DelChatSessionReq) {
+    const {senderId, receiverId} = delReq;
+    return new ResultUtils().success(await this.chatSessionService.delChatSession(senderId, receiverId));
   }
 
   @Get('/')

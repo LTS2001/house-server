@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Inject, Post, Query } from '@midwayjs/core';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
-import { AddChatMessageReq, GetChatMessageReq } from '@/dto/chat/ChatDto';
+import { AddChatMessageReq, GetChatMessageReq, GetCurrentSessionLastOneMessageReq } from '@/dto/chat/ChatDto';
 import { ResultUtils } from '@/common/ResultUtils';
 import { ChatMessageService } from '@/service/chat/ChatMessageService';
 
@@ -23,5 +23,14 @@ export class ChatMessageController {
   @Get('/lastOne')
   async getChatSessionLastOneMessageList(@Query('senderId') senderId: string) {
     return new ResultUtils().success(await this.chatListService.getChatSessionLastOneMessageList(senderId));
+  }
+
+  /**
+   * 获取当前 sender 和 receiver 会话的最新消息
+   */
+  @Get('/session/lastOne')
+  async getCurrentChatSessionLastOneMessage(@Query() request: GetCurrentSessionLastOneMessageReq) {
+    const {senderId, receiverId} = request;
+    return new ResultUtils().success(await this.chatListService.getCurrentChatSessionLastOneMessage(senderId, receiverId));
   }
 }

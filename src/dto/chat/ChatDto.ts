@@ -50,3 +50,16 @@ export class GetChatMessageReq extends BaseChatSession {
   @Rule(RuleNumRequire)
   page: number;
 }
+
+/**
+ * 获取当前 sender 和 receiver 会话的最新消息
+ */
+export class GetCurrentSessionLastOneMessageReq extends BaseChatSession {
+}
+
+/**
+ * 删除聊天会话信息
+ */
+export class DelChatSessionReq extends BaseChatSession {
+
+}

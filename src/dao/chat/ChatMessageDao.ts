@@ -3,7 +3,6 @@ import { ChatMessage } from '@/entities/ChatMessage';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { LessThanOrEqual, Repository } from 'typeorm';
 import { CHAT_MESSAGE_NORMAL } from '@/constant/chatConstant';
-import { ToolUtil } from '@/utils/ToolUtil';
 
 @Provide()
 export class ChatMessageDao {
@@ -40,7 +39,7 @@ export class ChatMessageDao {
   ) {
     // 获取游标
     const cursor = ChatMessageDao.sessionCursor.get(`${ senderId }-${ receiverId }`) || new Date();
-    console.log('条件游标', ToolUtil.formatUtcTime(cursor));
+
     const messageList = await this.chatMessageModel.find({
       where: session.map(s => {
         if (s.senderId === senderId) { // 说明会话是sender发起的
@@ -63,17 +62,11 @@ export class ChatMessageDao {
       skip: page - 1,
       take: limit
     });
-    console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~', messageList.length);
     if (messageList.length) {
       const date = messageList[messageList.length - 1].createdAt;
       ChatMessageDao.sessionCursor.delete(`${ senderId }-${ receiverId }`);
       // 存储游标，key格式（senderId-receiverId）
       ChatMessageDao.sessionCursor.set(`${ senderId }-${ receiverId }`, date);
-      const cursor = ChatMessageDao.sessionCursor.get(`${ senderId }-${ receiverId }`);
-      console.log('@@@@@@@@@@@@@@@@cursor', ToolUtil.formatUtcTime(cursor));
-    } else {
-      console.log('##################################', cursor);
-
     }
     return messageList;
   }
@@ -90,7 +83,7 @@ export class ChatMessageDao {
       .where('chat.session_id IN (:...sessionIds)', {sessionIds: sessionIdList})
       .groupBy('chat.session_id')
       .getRawMany();
-
+    if (!latestRecords.length) return [];
     return await this.chatMessageModel.find({
       where: latestRecords.map(r => ({sessionId: r.session_id, updatedAt: r.max_updated_at}))
     });

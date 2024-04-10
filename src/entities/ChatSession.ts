@@ -21,18 +21,32 @@ export class ChatSession {
   isOnline: number;
 
   @Column('int', {
+    name: 'is_last',
+    comment: 'sender 和 receiver 之间该会话是否是最新：0(否)，1(是)',
+    default: () => '\'0\'',
+  })
+  isLast: number;
+
+  @Column('int', {
     name: 'unread',
-    comment: '发送者未读数',
+    comment: '发送者消息未读数',
     default: () => '\'0\'',
   })
   unread: number;
 
   @Column('int', {
-    name: 'status',
-    comment: '该聊天会话的状态：0(已删除)，1(正常)',
+    name: 'del_by_sender',
+    comment: '该聊天会话是否被sender删除：0(已删除)，1(正常)',
     default: () => '\'1\'',
   })
-  status: number;
+  delBySender: number;
+
+  @Column('int', {
+    name: 'del_by_receiver',
+    comment: '该聊天会话是否被receiver删除：0(已删除)，1(正常)',
+    default: () => '\'1\'',
+  })
+  delByReceiver: number;
 
   @Column('datetime', {
     name: 'created_at',
@@ -44,7 +58,7 @@ export class ChatSession {
   @Column('datetime', {
     name: 'updated_at',
     comment: '更新时间',
-    default: () => 'CURRENT_TIMESTAMP',
+    default: () => 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date;
 

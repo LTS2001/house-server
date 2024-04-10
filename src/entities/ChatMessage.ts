@@ -56,6 +56,7 @@ export class ChatMessage {
     name: 'updated_at',
     comment: '更新时间',
     default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date;
 
