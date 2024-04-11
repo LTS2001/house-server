@@ -35,7 +35,7 @@ export class LeaseService {
     const checkLease = await this.leaseDao.checkHouseLeaseStatus(houseId, landlordId, tenantId);
     if (checkLease?.status === LEASE_TRAVERSE) { // 租赁记录标志为（通过租赁），则抛出错误
       throw new BusinessException(ResponseCode.OPERATION_ERROR, '该房屋已被租赁！');
-    } else if (!checkLease) { // checkLease为空则表示不存在，则需要进行插入租赁记录操作
+    } else if (!checkLease || checkLease.status === LEASE_REFUND) { // checkLease 为空则表示不存在或者是退租，则需要进行插入租赁记录操作
       const lease = new HouseLease();
       lease.houseId = houseId;
       lease.landlordId = landlordId;

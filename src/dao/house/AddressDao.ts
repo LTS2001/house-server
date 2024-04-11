@@ -1,7 +1,7 @@
 import { Provide } from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/orm';
-import { Repository } from 'typeorm';
 import { HouseAddress } from '@/entities/HouseAddress';
+import { Between, Repository } from 'typeorm';
 
 @Provide()
 export class AddressDao {
@@ -43,6 +43,28 @@ export class AddressDao {
   async getHouseAddress(addressIds: number[]) {
     return await this.houseAddressModel.find({
       where: addressIds.map(id => ({id}))
+    });
+  }
+
+
+  /**
+   * 获取房屋地址通过经纬度
+   * @param minLat
+   * @param minLng
+   * @param maxLat
+   * @param maxLng
+   */
+  async getAddressByLatLng(
+    minLat: number,
+    minLng: number,
+    maxLat: number,
+    maxLng: number
+  ) {
+    return await this.houseAddressModel.find({
+      where: {
+        latitude: Between(minLat, maxLat),
+        longitude: Between(minLng, maxLng)
+      }
     });
   }
 }

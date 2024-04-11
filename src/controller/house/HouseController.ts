@@ -1,6 +1,6 @@
 import { Body, Controller, Del, File, Get, Inject, Post, Put, Query } from '@midwayjs/core';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
-import { AddHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
+import { AddHouseReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
 import { HouseService } from '@/service/house/HouseService';
 import { ResultUtils } from '@/common/ResultUtils';
 import { Context } from '@midwayjs/koa';
@@ -73,8 +73,8 @@ export class HouseController {
   }
 
   @Get('/page')
-  async getHousesByPage() {
-    return new ResultUtils().success(await this.houseService.getHouseByPage());
+  async getHousesByPage(@Query() getMarkHouseReq: GetMarkHouseReq) {
+    return new ResultUtils().success(await this.houseService.getHouseByPage(getMarkHouseReq));
   }
 
   /**

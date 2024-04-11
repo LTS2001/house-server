@@ -1,4 +1,4 @@
-import {Rule, RuleType} from "@midwayjs/validate";
+import { Rule, RuleType } from '@midwayjs/validate';
 
 const RuleStrRequired = RuleType.string().required();
 const RuleNumRequired = RuleType.number().required();
@@ -90,4 +90,18 @@ export class UpdateHouseReq extends BaseHouseReq {
 
   @Rule(RuleNumRequired)
   addressId: number;
+}
+
+export class GetMarkHouseReq {
+  @Rule(RuleNumRequired)
+  minLng: number;
+
+  @Rule(RuleNumRequired)
+  minLat: number;
+
+  @Rule(RuleNumRequired)
+  maxLng: number;
+
+  @Rule(RuleNumRequired)
+  maxLat: number;
 }

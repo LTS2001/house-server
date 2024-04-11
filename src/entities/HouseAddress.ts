@@ -26,7 +26,7 @@ export class HouseAddress {
     name: 'latitude',
     comment: '纬度',
     precision: 20,
-    scale: 8,
+    scale: 16,
   })
   latitude: number;
 
@@ -34,7 +34,7 @@ export class HouseAddress {
     name: 'longitude',
     comment: '经度',
     precision: 20,
-    scale: 8,
+    scale: 16,
   })
   longitude: number;
 

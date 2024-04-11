@@ -28,7 +28,10 @@ export class LeaseDao {
    */
   async getLeaseStatus(houseId: number, tenantId: number) {
     return await this.houseLeaseModel.findOne({
-      where: {houseId, tenantId}
+      where: {houseId, tenantId},
+      order: {
+        updatedAt: 'desc'
+      }
     });
   }
 
@@ -39,7 +42,10 @@ export class LeaseDao {
    */
   async checkHouseLeaseStatus(houseId: number, landlordId: number, tenantId: number) {
     return await this.houseLeaseModel.findOne({
-      where: {houseId, landlordId, tenantId}
+      where: {houseId, landlordId, tenantId},
+      order: {
+        updatedAt: 'desc'
+      }
     });
   }
 
@@ -69,7 +75,10 @@ export class LeaseDao {
   async updateLeaseStatus(condition: { landlordId: number, tenantId: number, houseId: number }, status: number) {
     const {landlordId, tenantId, houseId} = condition;
     const lease = await this.houseLeaseModel.findOne({
-      where: {landlordId, tenantId, houseId}
+      where: {landlordId, tenantId, houseId},
+      order: {
+        updatedAt: 'desc'
+      }
     });
     lease.status = status;
     return await this.houseLeaseModel.save(lease);

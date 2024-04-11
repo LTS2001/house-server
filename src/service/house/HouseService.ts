@@ -3,7 +3,7 @@ import { AddressDao } from '@/dao/house/AddressDao';
 import { HouseDao } from '@/dao/house/HouseDao';
 import { houseAddressTableField, houseInfoTableField } from '@/constant/houseConstant';
 import { Landlord } from '@/entities/Landlord';
-import { AddHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
+import { AddHouseReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
 import { HouseAddress } from '@/entities/HouseAddress';
 import { House } from '@/entities/House';
 import { IHouseInfo } from '@/typings/house/house';
@@ -191,18 +191,16 @@ export class HouseService {
   /**
    * 分页获取全部房屋
    */
-  async getHouseByPage() {
-    const houseList = await this.houseDao.getHouseByPage();
-    const houseAddressList = await this.addressDao.getHouseAddress(
-      houseList.map(({addressId}) => addressId)
-    );
+  async getHouseByPage(getMarkHouseReq: GetMarkHouseReq) {
+    const {minLat, minLng, maxLat, maxLng} = getMarkHouseReq;
+    // 获取房屋信息通过房屋地址 id
+    const houseList = await this.houseDao.getHouseByPage(minLat, minLng, maxLat, maxLng);
     const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
-    houseList.forEach(item => {
+    houseList.forEach(house => {
         const obj: any = {
-          ...houseAddressList.find(i => i.id === item.addressId),
-          ...item,
-          houseId: item.id,
-          addressId: item.addressId
+          ...house.address,
+          ...house,
+          houseId: house.id,
         };
         delete obj.id;
         infoArr.push(obj as IHouseInfo.IResultHouseInfos);

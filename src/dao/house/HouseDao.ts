@@ -2,6 +2,7 @@ import { Provide } from '@midwayjs/core';
 import { Repository } from 'typeorm';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { House } from '@/entities/House';
+import { HOUSE_FORRENT_RELEASED } from '@/constant/houseConstant';
 
 @Provide()
 export class HouseDao {
@@ -59,8 +60,23 @@ export class HouseDao {
 
   /**
    * 分页获取房屋
+   * @param minLat
+   * @param minLng
+   * @param maxLat
+   * @param maxLng
    */
-  async getHouseByPage() {
-    return await this.houseModel.find();
+  async getHouseByPage(
+    minLat: number,
+    minLng: number,
+    maxLat: number,
+    maxLng: number
+  ) {
+    return await this.houseModel
+      .createQueryBuilder('house')
+      .leftJoinAndSelect('house.address', 'address')
+      .where('address.latitude BETWEEN :minLat AND :maxLat', {minLat, maxLat})
+      .andWhere('address.longitude BETWEEN :minLng AND :maxLng', {minLng, maxLng})
+      .andWhere('house.status = :status', {status: HOUSE_FORRENT_RELEASED})
+      .getMany();
   }
 }
