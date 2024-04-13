@@ -24,11 +24,11 @@ export class HouseReport {
   @Column('varchar', {name: 'reason', comment: '报修原因', length: 255})
   reason: string;
 
-  @Column('varchar', {name: 'image', comment: '图片', length: 255})
-  image: string;
+  @Column('varchar', {name: 'image', nullable: true, comment: '图片', length: 255})
+  image: string | null;
 
-  @Column('varchar', {name: 'video', comment: '视频', length: 255})
-  video: string;
+  @Column('varchar', {name: 'video', nullable: true, comment: '视频', length: 255})
+  video: string | null;
 
   @Column('int', {
     name: 'status',

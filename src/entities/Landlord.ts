@@ -1,6 +1,5 @@
 import { Column, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { EntityModel } from '@midwayjs/orm';
-import { Complaint } from './Complaint';
 import { House } from './House';
 import { HouseCollect } from './HouseCollect';
 import { HouseComment } from './HouseComment';
@@ -63,9 +62,6 @@ export class Landlord {
     onUpdate: 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date;
-
-  @OneToMany(() => Complaint, (complaint) => complaint.landlord)
-  complaints: Complaint[];
 
   @OneToMany(() => House, (house) => house.landlord)
   houses: House[];

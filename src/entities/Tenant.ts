@@ -1,6 +1,5 @@
 import { Column, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { EntityModel } from '@midwayjs/orm';
-import { Complaint } from './Complaint';
 import { HouseCollect } from './HouseCollect';
 import { HouseComment } from './HouseComment';
 import { HouseLease } from './HouseLease';
@@ -17,10 +16,10 @@ export class Tenant {
   @Column('varchar', {name: 'phone', comment: '租客手机', length: 255})
   phone: string;
 
-  @Column("varchar", {
-    name: "password",
+  @Column('varchar', {
+    name: 'password',
     nullable: true,
-    comment: "租客密码",
+    comment: '租客密码',
     length: 255,
   })
   password: string | null;
@@ -62,9 +61,6 @@ export class Tenant {
     onUpdate: 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date;
-
-  @OneToMany(() => Complaint, (complaint) => complaint.tenant)
-  complaints: Complaint[];
 
   @OneToMany(() => HouseCollect, (houseCollect) => houseCollect.tenant)
   houseCollects: HouseCollect[];

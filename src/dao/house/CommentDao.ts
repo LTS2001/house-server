@@ -37,7 +37,10 @@ export class CommentDao {
 
   async getCommentByHouseId(houseId: number) {
     return await this.commentModel.find({
-      where: {houseId}
+      where: {houseId},
+      order: {
+        updatedAt: 'desc'
+      }
     });
   }
 }

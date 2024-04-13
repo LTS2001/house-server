@@ -11,6 +11,8 @@ export class AddCommentReq {
   @Rule(RuleNumRequired)
   tenantId: number;
   @Rule(RuleNumRequired)
+  leaseId: number;
+  @Rule(RuleNumRequired)
   houseScore: number;
   @Rule(RuleNumRequired)
   landlordScore: number;

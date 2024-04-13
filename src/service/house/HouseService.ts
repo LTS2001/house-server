@@ -3,7 +3,7 @@ import { AddressDao } from '@/dao/house/AddressDao';
 import { HouseDao } from '@/dao/house/HouseDao';
 import { houseAddressTableField, houseInfoTableField } from '@/constant/houseConstant';
 import { Landlord } from '@/entities/Landlord';
-import { AddHouseReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
+import { AddHouseReq, GetHouseKeyWordReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
 import { HouseAddress } from '@/entities/HouseAddress';
 import { House } from '@/entities/House';
 import { IHouseInfo } from '@/typings/house/house';
@@ -203,6 +203,31 @@ export class HouseService {
           houseId: house.id,
         };
         delete obj.id;
+        delete obj.address;
+        infoArr.push(obj as IHouseInfo.IResultHouseInfos);
+      }
+    );
+    return infoArr;
+  }
+
+  /**
+   * 获取房屋通过关键字
+   * @param getHouseReq
+   */
+  async getHouseByKeyword(getHouseReq: GetHouseKeyWordReq) {
+    const {minLat, minLng, maxLat, maxLng} = getHouseReq;
+    let keyword = getHouseReq.keyword || '';
+    const houseList = await this.houseDao.getHouseByKeyword(minLat, minLng, maxLat, maxLng, keyword);
+    const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
+    houseList.forEach(house => {
+        delete house.landlord;
+        const obj: any = {
+          ...house.address,
+          ...house,
+          houseId: house.id,
+        };
+        delete obj.id;
+        delete obj.address;
         infoArr.push(obj as IHouseInfo.IResultHouseInfos);
       }
     );

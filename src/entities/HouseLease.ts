@@ -1,8 +1,9 @@
-import { Column, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, } from 'typeorm';
 import { EntityModel } from '@midwayjs/orm';
+import { HouseComment } from './HouseComment';
+import { Tenant } from './Tenant';
 import { House } from './House';
 import { Landlord } from './Landlord';
-import { Tenant } from './Tenant';
 
 @Index('house_lease_house_id_fk', ['houseId'], {})
 @Index('house_lease_landlord_id_fk', ['landlordId'], {})
@@ -43,6 +44,16 @@ export class HouseLease {
   })
   updatedAt: Date;
 
+  @OneToMany(() => HouseComment, (houseComment) => houseComment.lease)
+  houseComments: HouseComment[];
+
+  @ManyToOne(() => Tenant, (tenant) => tenant.houseLeases, {
+    onDelete: 'NO ACTION',
+    onUpdate: 'NO ACTION',
+  })
+  @JoinColumn([{name: 'tenant_id', referencedColumnName: 'id'}])
+  tenant: Tenant;
+
   @ManyToOne(() => House, (house) => house.houseLeases, {
     onDelete: 'NO ACTION',
     onUpdate: 'NO ACTION',
@@ -56,11 +67,4 @@ export class HouseLease {
   })
   @JoinColumn([{name: 'landlord_id', referencedColumnName: 'id'}])
   landlord: Landlord;
-
-  @ManyToOne(() => Tenant, (tenant) => tenant.houseLeases, {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
-  })
-  @JoinColumn([{name: 'tenant_id', referencedColumnName: 'id'}])
-  tenant: Tenant;
 }

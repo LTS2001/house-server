@@ -79,4 +79,22 @@ export class HouseDao {
       .andWhere('house.status = :status', {status: HOUSE_FORRENT_RELEASED})
       .getMany();
   }
+
+  async getHouseByKeyword(
+    minLat: number,
+    minLng: number,
+    maxLat: number,
+    maxLng: number,
+    keyword: string
+  ) {
+    return await this.houseModel
+      .createQueryBuilder('house')
+      .leftJoinAndSelect('house.address', 'address')
+      .leftJoinAndSelect('house.landlord', 'landlord')
+      .where('address.latitude BETWEEN :minLat AND :maxLat', {minLat, maxLat})
+      .andWhere('address.longitude BETWEEN :minLng AND :maxLng', {minLng, maxLng})
+      .andWhere('house.status = :status', {status: HOUSE_FORRENT_RELEASED})
+      .andWhere('(address.addressName LIKE :keyword OR landlord.name LIKE :keyword OR house.name LIKE :keyword)', {keyword: `%${ keyword }%`})
+      .getMany();
+  }
 }

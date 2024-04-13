@@ -11,10 +11,9 @@ export class ReportService {
   /**
    * 添加维修记录
    * @param reportObj 维修信息
-   * @param tenantId 租客id
    */
-  async addReport(reportObj: AddReportReq, tenantId: number) {
-    const {houseId, reason, image, video, landlordId} = reportObj;
+  async addReport(reportObj: AddReportReq) {
+    const {houseId, reason, image, video, landlordId, tenantId} = reportObj;
     const houseReport = new HouseReport();
     houseReport.houseId = houseId;
     houseReport.landlordId = landlordId;

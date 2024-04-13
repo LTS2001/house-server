@@ -64,13 +64,13 @@ class BaseHouseReq {
   @Rule(RuleNumRequired)
   longitude: number;
 
-  @Rule(RuleType.string().empty())
+  @Rule(RuleType.string().empty(''))
   note: string;
 
-  @Rule(RuleType.number().empty())
+  @Rule(RuleType.number().empty(''))
   parentId: number;
 
-  @Rule(RuleType.number().empty())
+  @Rule(RuleType.number().empty(''))
   status: number;
 }
 
@@ -104,4 +104,9 @@ export class GetMarkHouseReq {
 
   @Rule(RuleNumRequired)
   maxLat: number;
+}
+
+export class GetHouseKeyWordReq extends GetMarkHouseReq {
+  @Rule(RuleType.string().empty(''))
+  keyword: string;
 }

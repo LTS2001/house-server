@@ -1,32 +1,46 @@
-import { Column, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn, } from 'typeorm';
-import { EntityModel } from '@midwayjs/orm';
-import { Landlord } from './Landlord';
-import { Tenant } from './Tenant';
+import { Column, PrimaryGeneratedColumn } from "typeorm";
+import { EntityModel } from "@midwayjs/orm";
 
-@Index('complaint_landlord_id_fk', ['landlordId'], {})
-@Index('complaint_tenant_id_fk', ['tenantId'], {})
-@EntityModel('complaint', {schema: 'house'})
+@EntityModel("complaint", { schema: "house" })
 export class Complaint {
-  @PrimaryGeneratedColumn({type: 'int', name: 'id'})
+  @PrimaryGeneratedColumn({ type: "int", name: "id" })
   id: number;
 
-  @Column('int', {name: 'landlord_id', nullable: true, comment: '房东id'})
-  landlordId: number | null;
+  @Column("int", { name: "complaint_id", comment: "投诉人id" })
+  complaintId: number;
 
-  @Column('int', {name: 'tenant_id', comment: '租客id'})
-  tenantId: number;
-
-  @ManyToOne(() => Landlord, (landlord) => landlord.complaints, {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
+  @Column("int", {
+    name: "identity",
+    nullable: true,
+    comment: "投诉人身份：1(租客)，2(房东)",
   })
-  @JoinColumn([{name: 'landlord_id', referencedColumnName: 'id'}])
-  landlord: Landlord;
+  identity: number | null;
 
-  @ManyToOne(() => Tenant, (tenant) => tenant.complaints, {
-    onDelete: 'NO ACTION',
-    onUpdate: 'NO ACTION',
+  @Column("varchar", { name: "reason", comment: "投诉原因", length: 255 })
+  reason: string;
+
+  @Column("varchar", { name: "image", comment: "投诉图片地址", length: 255 })
+  image: string;
+
+  @Column("varchar", { name: "video", comment: "投诉视频地址", length: 255 })
+  video: string;
+
+  @Column("int", {
+    name: "status",
+    comment: "状态：-1(未处理)，0(删除)，1(已处理)",
+    default: () => "'-1'",
   })
-  @JoinColumn([{name: 'tenant_id', referencedColumnName: 'id'}])
-  tenant: Tenant;
+  status: number;
+
+  @Column("datetime", {
+    name: "created_at",
+    default: () => "CURRENT_TIMESTAMP",
+  })
+  createdAt: Date;
+
+  @Column("datetime", {
+    name: "updated_at",
+    default: () => "CURRENT_TIMESTAMP",
+  })
+  updatedAt: Date;
 }

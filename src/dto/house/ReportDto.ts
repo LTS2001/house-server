@@ -10,6 +10,9 @@ export class AddReportReq {
   @Rule(RuleNumRequired)
   landlordId: number;
 
+  @Rule(RuleNumRequired)
+  tenantId: number;
+
   @Rule(RuleStrRequired)
   reason: string;
 
@@ -23,7 +26,7 @@ export class AddReportReq {
 export class UpdateReportReq {
   @Rule(RuleNumRequired)
   reportId: number;
-  
+
   @Rule(RuleNumRequired)
   status: number;
 }

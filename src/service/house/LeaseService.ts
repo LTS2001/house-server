@@ -106,7 +106,6 @@ export class LeaseService {
    */
   async refundLease(leaseId: number) {
     const lease = await this.leaseDao.updateLeaseStatusByLeaseId(leaseId, LEASE_REFUND);
-    console.log(lease);
     const house = new House();
     // 房屋状态回到（待租已发布）的状态
     house.status = HOUSE_FORRENT_RELEASED;
@@ -130,9 +129,9 @@ export class LeaseService {
       };
     });
     const houseInfoList = await this.houseService.getHouseByTwoIdList(twoIdList);
-    return twoIdList.map(t => {
+    return twoIdList.map((t, idx: number) => {
       const houseInfo = houseInfoList.find(h => h.landlordId === t.landlordId && h.houseId === t.houseId);
-      const refund = refundLease.find(r => r.landlordId === t.landlordId && r.houseId === t.houseId);
+      const refund = refundLease[idx];
       const leaseId = refund.id;
       delete refund.id;
       return {

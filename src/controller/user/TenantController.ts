@@ -57,10 +57,8 @@ export class TenantController {
    * 获取租客租赁的房屋
    */
   @Get('/lease', {middleware: [JwtMiddleware]})
-  async getUserLeaseHouse() {
-    const {id} = this.ctx.user;
-    console.log('当前租客的id', this.ctx.user);
-    const leaseHouse = await this.tenantService.getUserLeaseHouse(id);
+  async getUserLeaseHouse(@Query('tenantId') tenantId: number) {
+    const leaseHouse = await this.tenantService.getUserLeaseHouse(tenantId);
     return new ResultUtils().success(leaseHouse);
   }
 
