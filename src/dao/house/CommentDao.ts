@@ -1,7 +1,8 @@
 import { Provide } from '@midwayjs/core';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { HouseComment } from '@/entities/HouseComment';
+import { GetCommentAdminReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class CommentDao {
@@ -42,5 +43,34 @@ export class CommentDao {
         updatedAt: 'desc'
       }
     });
+  }
+
+  async getCommentByAdmin(getCommentReq: GetCommentAdminReq) {
+    const {current, pageSize} = getCommentReq;
+    const obj: any = {};
+    const equalArr = ['id', 'houseId', 'landlordId', 'tenantId', 'status', 'houseScore', 'landlordScore'];
+    const likeArr = ['comment'];
+    Object.keys(getCommentReq).forEach(key => {
+      if (equalArr.find(e => e === key)) {
+        obj[key] = getCommentReq[key];
+      }
+      if (likeArr.find(l => l === key)) {
+        obj[key] = Like(`%${ getCommentReq[key] }%`);
+      }
+    });
+    return await this.commentModel.find({
+      where: obj,
+      order: {id: 'desc'},
+      skip: current - 1,
+      take: pageSize
+    });
+  }
+
+  async updateCommentStatus(id: number, status: number) {
+    const comment = await this.commentModel.findOne({
+      where: {id}
+    });
+    comment.status = status;
+    return await this.commentModel.save(comment);
   }
 }

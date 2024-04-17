@@ -5,6 +5,7 @@ import { HouseService } from '@/service/house/HouseService';
 import { ResultUtils } from '@/common/ResultUtils';
 import { Context } from '@midwayjs/koa';
 import { ToolUtil } from '@/utils/ToolUtil';
+import { GetHouseAdminReq, UpdateHouseStatusReq } from '@/dto/user/AdminDto';
 
 @Controller('/house')
 export class HouseController {
@@ -89,5 +90,24 @@ export class HouseController {
   async getHouseListByHouseId(@Query('houseIdList') houseIdList: string) {
     const ids = ToolUtil.splitIdList(houseIdList);
     return new ResultUtils().success(await this.houseService.getHouseListByHouseId(ids));
+  }
+
+  /**
+   * 管理员获取房屋信息
+   */
+  @Post('/admin/get', {middleware: [JwtMiddleware]})
+  async getHouseByAdmin(@Body() getHouseReq: GetHouseAdminReq) {
+    Object.keys(getHouseReq).forEach(key => {
+      if (!getHouseReq[key] && getHouseReq[key] !== 'status' && getHouseReq[key] !== 0) {
+        delete getHouseReq[key];
+      }
+    });
+    return new ResultUtils().success(await this.houseService.getHouseByAdmin(getHouseReq));
+  }
+
+  @Put('/admin', {middleware: [JwtMiddleware]})
+  async updateHouseStatus(@Body() houseReq: UpdateHouseStatusReq) {
+    const {status, id} = houseReq;
+    return new ResultUtils().success(await this.houseService.updateHouseStatus(id, status));
   }
 }

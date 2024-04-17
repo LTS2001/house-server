@@ -10,6 +10,7 @@ import { LeaseDao } from '@/dao/house/LeaseDao';
 import { TENANT_HEAD_IMG, TENANT_NAME } from '@/constant/userConstant';
 import { LEASE_TRAVERSE } from '@/constant/leaseConstant';
 import { HouseService } from '@/service/house/HouseService';
+import { GetTenantReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class TenantService {
@@ -126,5 +127,13 @@ export class TenantService {
    */
   async getTenantByIdList(tenantIdList: number[]) {
     return await this.tenantDao.getTenantByIds(tenantIdList);
+  }
+
+  async getTenantByAdmin(getTenantReq: GetTenantReq) {
+    return await this.tenantDao.getTenantByAdmin(getTenantReq);
+  }
+
+  async updateTenantStatus(id: number, status: number) {
+    return await this.tenantDao.updateTenantStatus(id, status);
   }
 }

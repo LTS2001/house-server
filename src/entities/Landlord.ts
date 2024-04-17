@@ -35,7 +35,7 @@ export class Landlord {
 
   @Column('int', {
     name: 'status',
-    comment: '状态->1：正常，2：停用，3：删除',
+    comment: '状态：-1(停用)，0(删除)，1(正常)',
     default: () => '\'1\'',
   })
   status: number;

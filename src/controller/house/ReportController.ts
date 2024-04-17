@@ -3,6 +3,7 @@ import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { AddReportReq, UpdateReportReq } from '@/dto/house/ReportDto';
 import { ReportService } from '@/service/house/ReportService';
 import { ResultUtils } from '@/common/ResultUtils';
+import { GetReportReq } from '@/dto/user/AdminDto';
 
 @Controller('/report')
 export class ReportController {
@@ -43,5 +44,18 @@ export class ReportController {
   async updateReportStatusById(@Body() updateObj: UpdateReportReq) {
     const {reportId, status} = updateObj;
     return new ResultUtils().success(await this.reportService.updateReportStatus(reportId, status));
+  }
+
+  /**
+   * 管理员获取房屋维修信息
+   */
+  @Post('/admin/get', {middleware: [JwtMiddleware]})
+  async getReportByAdmin(@Body() getReportReq: GetReportReq) {
+    Object.keys(getReportReq).forEach(key => {
+      if (!getReportReq[key] && getReportReq[key] !== 'status' && getReportReq[key] !== 0) {
+        delete getReportReq[key];
+      }
+    });
+    return new ResultUtils().success(await this.reportService.getReportByAdmin(getReportReq));
   }
 }

@@ -13,6 +13,9 @@ class BaseComplaint {
 
 export class AddComplaintReq extends BaseComplaint {
   @Rule(RuleStrRequired)
+  phone: string;
+
+  @Rule(RuleStrRequired)
   reason: string;
 
   @Rule(RuleStrRequired)

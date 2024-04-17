@@ -11,6 +11,7 @@ import { LeaseDao } from '@/dao/house/LeaseDao';
 import { TenantDao } from '@/dao/user/TenantDao';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
+import { GetLandlordReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class LandlordService {
@@ -113,5 +114,13 @@ export class LandlordService {
   async getTenantsByLandlordId(landlordId: number) {
     const lease = await this.leaseDao.getLeaseByLandlordId(landlordId);
     return await this.tenantDao.getTenantByIds(lease.map(l => (l.tenantId)));
+  }
+
+  async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {
+    return await this.landlordDao.getLandlordByAdmin(getLandlordReq);
+  }
+
+  async updateLandlordStatus(id: number, status: number) {
+    return await this.landlordDao.updateLandlordStatus(id, status);
   }
 }

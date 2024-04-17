@@ -35,7 +35,7 @@ export default {
   },
   jwt: {
     secret: 'mini house',
-    expiresIn: '1d',
+    expiresIn: '10d',
   },
   upload: {
     tmpdir: 'F:/GraduationDesign/static-img',

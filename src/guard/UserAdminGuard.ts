@@ -1,8 +1,8 @@
-import {getPropertyMetadata, Guard, IGuard} from "@midwayjs/core";
-import {Context} from "@midwayjs/koa";
-import {ROLE_META_KEY} from "../decorator/role";
-import {BusinessException} from "../exception/BusinessException";
-import {ResponseCode} from "../common/ResponseFormat";
+import { getPropertyMetadata, Guard, IGuard } from '@midwayjs/core';
+import { Context } from '@midwayjs/koa';
+import { ROLE_META_KEY } from '../decorator/role';
+import { BusinessException } from '../exception/BusinessException';
+import { ResponseCode } from '../common/ResponseFormat';
 
 @Guard()
 export class UserAdminGuard implements IGuard<Context> {

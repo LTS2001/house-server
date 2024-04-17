@@ -10,12 +10,12 @@ export enum UserAdminConstant {
   /**
    * 默认角色为admin
    */
-  DefaultRole = 'admin',
+  DefaultRole = 0,
 
   /**
    * 超级管理员角色superAdmin
    */
-  SuperAdminRole = 'superAdmin',
+  SuperAdminRole = 1,
 }
 
 /**

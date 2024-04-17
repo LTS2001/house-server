@@ -1,9 +1,9 @@
-import {savePropertyMetadata, UseGuard} from '@midwayjs/core';
-import {UserAdminGuard} from "../guard/UserAdminGuard";
+import { savePropertyMetadata, UseGuard } from '@midwayjs/core';
+import { UserAdminGuard } from '../guard/UserAdminGuard';
 
-export const ROLE_META_KEY = 'role:name'
+export const ROLE_META_KEY = 'role:name';
 
-export function Role(roleName: string | string[]): MethodDecorator {
+export function Role(roleName: string | string[] | number | number[]): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     roleName = [].concat(roleName);
     // 只保存元数据

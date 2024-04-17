@@ -9,6 +9,7 @@ import { House } from '@/entities/House';
 import { IHouseInfo } from '@/typings/house/house';
 import { ToolUtil } from '@/utils/ToolUtil';
 import { LandlordDao } from '@/dao/user/LandlordDao';
+import { GetHouseAdminReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class HouseService {
@@ -240,5 +241,25 @@ export class HouseService {
    */
   async getHouseListByHouseId(houseIdList: number[]) {
     return await this.houseDao.getHouseByHouseIds(houseIdList);
+  }
+
+
+  async getHouseByAdmin(getHouseReq: GetHouseAdminReq) {
+    const houseList = await this.houseDao.getHouseByAdmin(getHouseReq);
+    const addressList = await this.addressDao.getHouseAddress(houseList?.map(h => h.addressId));
+    const landlordList = await this.landlordDao.getLandlordByIds(houseList?.map(h => h.landlordId));
+    return houseList?.map(house => {
+      const landlord = landlordList?.find(l => l.id === house.landlordId);
+      return {
+        ...addressList.find(a => a.id === house.addressId),
+        ...house,
+        landlordName: landlord?.name,
+        landlordPhone: landlord?.phone
+      };
+    });
+  }
+
+  async updateHouseStatus(id: number, status: number) {
+    return await this.houseDao.updateHouseStatus(id, status);
   }
 }

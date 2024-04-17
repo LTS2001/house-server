@@ -1,7 +1,8 @@
 import { Provide } from '@midwayjs/core';
 import { InjectEntityModel } from '@midwayjs/orm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { Admin } from '@/entities/Admin';
+import { GetAdminReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class AdminDao {
@@ -37,8 +38,8 @@ export class AdminDao {
    * @param adminObj 管理员信息
    * @return Admin 实体对象
    */
-  async updateAdmin(phone: string, adminObj: Admin) {
-    const admin = await this.adminModel.findOne({where: {phone}});
+  async updateAdmin(id: number, adminObj: Admin) {
+    const admin = await this.adminModel.findOne({where: {id}});
     Object.keys(adminObj).forEach((key) => {
       admin[key] = adminObj[key];
     });
@@ -52,5 +53,30 @@ export class AdminDao {
    */
   async getAdminByPhone(phone: string) {
     return await this.adminModel.findOne({where: {phone}});
+  }
+
+  async getAdminById(id: number) {
+    return await this.adminModel.findOne({where: {id}});
+  }
+
+  async getAdminList(getAdminReq: GetAdminReq) {
+    const {current, pageSize} = getAdminReq;
+    const obj: any = {};
+    const equalArr = ['id', 'status'];
+    const likeArr = ['name', 'phone', 'remark'];
+    Object.keys(getAdminReq).forEach(key => {
+      if (equalArr.find(e => e === key)) {
+        obj[key] = getAdminReq[key];
+      }
+      if (likeArr.find(l => l === key)) {
+        obj[key] = Like(`%${ getAdminReq[key] }%`);
+      }
+    });
+    return await this.adminModel.find({
+      where: obj,
+      order: {id: 'desc'},
+      skip: current - 1,
+      take: pageSize
+    });
   }
 }

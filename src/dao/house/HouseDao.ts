@@ -1,8 +1,9 @@
 import { Provide } from '@midwayjs/core';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { House } from '@/entities/House';
 import { HOUSE_FORRENT_RELEASED } from '@/constant/houseConstant';
+import { GetHouseAdminReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class HouseDao {
@@ -97,4 +98,35 @@ export class HouseDao {
       .andWhere('(address.addressName LIKE :keyword OR landlord.name LIKE :keyword OR house.name LIKE :keyword)', {keyword: `%${ keyword }%`})
       .getMany();
   }
+
+
+  async getHouseByAdmin(getHouseReq: GetHouseAdminReq) {
+    const {current, pageSize} = getHouseReq;
+    const obj: any = {};
+    const equalArr = ['id', 'houseId', 'landlordId', 'tenantId', 'status'];
+    const likeArr = ['reason'];
+    Object.keys(getHouseReq).forEach(key => {
+      if (equalArr.find(e => e === key)) {
+        obj[key] = getHouseReq[key];
+      }
+      if (likeArr.find(l => l === key)) {
+        obj[key] = Like(`%${ getHouseReq[key] }%`);
+      }
+    });
+    return await this.houseModel.find({
+      where: obj,
+      order: {id: 'desc'},
+      skip: current - 1,
+      take: pageSize
+    });
+  }
+
+  async updateHouseStatus(id: number, status: number) {
+    const house = await this.houseModel.findOne({
+      where: {id}
+    });
+    house.status = status;
+    return await this.houseModel.save(house);
+  }
+
 }

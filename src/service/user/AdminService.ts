@@ -2,20 +2,15 @@ import { AdminDao } from '@/dao/user/AdminDao';
 import { Inject, Provide } from '@midwayjs/core';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
-import { CryptoUtil } from '@/utils/CryptoUtil';
-import { Context } from '@midwayjs/koa';
-import { SESSION_KEY } from '@/constant/userConstant';
 import { RedisService } from '@midwayjs/redis';
 import { Admin } from '@/entities/Admin';
-import { AddAdminReq, UpdateAdminReq } from '@/dto/user/AdminDto';
+import { AddAdminReq, GetAdminReq, UpdateAdminReq, UpdateAdminSelfReq } from '@/dto/user/AdminDto';
 
 /**
  * user_admin处理逻辑
  */
 @Provide()
 export class AdminService {
-  @Inject()
-  private ctx: Context;
   @Inject()
   private adminDao: AdminDao;
   @Inject()
@@ -34,13 +29,14 @@ export class AdminService {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号不存在！');
     }
     // 校验用户密码
-    const decryptPassword = CryptoUtil.decryptStr(admin.password);
-    if (decryptPassword !== password) {
+    if (admin.password !== password) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
     }
-    this.ctx.session[SESSION_KEY] = CryptoUtil.encryptStr(phone);
-    // 将user的信息存入redis数据库中，加密后的手机号则作为key
-    await this.redisService.set(this.ctx.session[SESSION_KEY], JSON.stringify(admin));
+    if (admin.status !== 1) {
+      throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该账号异常！');
+    }
+    // 用户信息存入redis
+    await this.redisService.set(phone, JSON.stringify(admin));
     return admin;
   }
 
@@ -55,15 +51,14 @@ export class AdminService {
     if (checkAdmin) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已经存在！');
     }
-    // 密码加密
-    adminObj.password = CryptoUtil.encryptStr(adminObj.password);
-    const {name, phone, password, headImg, remark} = adminObj;
+
     const admin = new Admin();
-    admin.name = name;
-    admin.phone = phone;
-    admin.password = password;
-    admin.headImg = headImg;
-    admin.remark = remark;
+    Object.keys(adminObj).forEach(key => {
+      admin[key] = adminObj[key];
+    });
+    const {phone} = adminObj;
+    admin.password = phone.substring(phone.length - 6);
+
     const userAdmin = await this.adminDao.addAdmin(admin);
     if (!userAdmin) {
       throw new BusinessException(ResponseCode.SYSTEM_ERROR, '添加失败，请稍后重试！');
@@ -83,30 +78,20 @@ export class AdminService {
    * 更新管理员
    * @param adminObj 管理员信息
    */
-  async updateAdmin(adminObj: UpdateAdminReq) {
-    const {phone, name, headImg, remark, newPassword} = adminObj;
+  async updateAdmin(adminObj: UpdateAdminReq | UpdateAdminSelfReq) {
+    const {id} = adminObj;
     // 检查用户是否存在
-    const checkAdmin = await this.adminDao.getAdminByPhone(phone);
+    const checkAdmin = await this.adminDao.getAdminById(id);
     if (!checkAdmin) {
       throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号不存在！');
     }
-    // 若更改了密码，检验新旧密码是否相同
-    if (CryptoUtil.decryptStr(checkAdmin.password) === newPassword) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '新旧密码相同！');
-    }
-    let passwordEncrypt: string;
-    if (newPassword) {
-      // 密码加密
-      passwordEncrypt = CryptoUtil.encryptStr(newPassword);
-    }
-
     const admin = new Admin();
-    if (passwordEncrypt) admin.password = passwordEncrypt;
-    if (name) admin.name = name;
-    if (headImg) admin.headImg = headImg;
-    if (remark) admin.remark = remark;
-
-    return await this.adminDao.updateAdmin(phone, admin);
+    Object.keys(adminObj).forEach(key => {
+      if (adminObj[key]) {
+        admin[key] = adminObj[key];
+      }
+    });
+    return await this.adminDao.updateAdmin(id, admin);
   }
 
   /**
@@ -117,5 +102,9 @@ export class AdminService {
   async getAdmin(phone: string) {
     const admin = await this.adminDao.getAdminByPhone(phone);
     return {...admin, password: ''};
+  }
+
+  async getAdminList(getAdminReq: GetAdminReq) {
+    return await this.adminDao.getAdminList(getAdminReq);
   }
 }

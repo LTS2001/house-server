@@ -28,3 +28,10 @@ export class GetCommentReq {
   @Rule(RuleNumRequired)
   tenantId: number;
 }
+
+export class UpdateCommentReq {
+  @Rule(RuleNumRequired)
+  id: number;
+  @Rule(RuleNumRequired)
+  status: number;
+}

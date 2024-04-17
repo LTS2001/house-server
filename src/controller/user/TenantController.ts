@@ -11,6 +11,7 @@ import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { ToolUtil } from '@/utils/ToolUtil';
+import { GetTenantReq, UpdateTenantStatusReq } from '@/dto/user/AdminDto';
 
 @Controller('/tenant')
 export class TenantController {
@@ -81,5 +82,24 @@ export class TenantController {
   async getTenantByIdList(@Query('tenantIdList') tenantIdList: string) {
     const ids = ToolUtil.splitIdList(tenantIdList);
     return new ResultUtils().success(await this.tenantService.getTenantByIdList(ids));
+  }
+
+  /**
+   * 管理员获取租客信息
+   */
+  @Post('/admin/get', {middleware: [JwtMiddleware]})
+  async getTenantByAdmin(@Body() getTenantReq: GetTenantReq) {
+    Object.keys(getTenantReq).forEach(key => {
+      if (!getTenantReq[key] && getTenantReq[key] !== 'status' && getTenantReq[key] !== 0) {
+        delete getTenantReq[key];
+      }
+    });
+    return new ResultUtils().success(await this.tenantService.getTenantByAdmin(getTenantReq));
+  }
+
+  @Put('/admin', {middleware: [JwtMiddleware]})
+  async updateTenantStatus(@Body() tenantReq: UpdateTenantStatusReq) {
+    const {status, id} = tenantReq;
+    return new ResultUtils().success(await this.tenantService.updateTenantStatus(id, status));
   }
 }

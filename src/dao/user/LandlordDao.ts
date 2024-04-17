@@ -1,7 +1,8 @@
 import { InjectEntityModel } from '@midwayjs/orm';
 import { Landlord } from '@/entities/Landlord';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { Provide } from '@midwayjs/core';
+import { GetLandlordReq } from '@/dto/user/AdminDto';
 
 @Provide()
 export class LandlordDao {
@@ -80,5 +81,39 @@ export class LandlordDao {
     return await this.landlordModel.find({
       where: LandlordIds.map(id => ({id}))
     });
+  }
+
+  async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {
+    const {current, pageSize, id, name, phone, status, remark} = getLandlordReq;
+    const obj: any = {};
+    if (id) {
+      obj.id = id;
+    }
+    if (name) {
+      obj.name = Like(`%${ name }%`);
+    }
+    if (phone) {
+      obj.phone = Like(`%${ phone }%`);
+    }
+    if (remark) {
+      obj.remark = Like(`%${ remark }%`);
+    }
+    if (status) {
+      obj.status = status;
+    }
+    return await this.landlordModel.find({
+      where: obj,
+      order: {id: 'desc'},
+      skip: current - 1,
+      take: pageSize
+    });
+  }
+
+  async updateLandlordStatus(id: number, status: number) {
+    const landlord = await this.landlordModel.findOne({
+      where: {id}
+    });
+    landlord.status = status;
+    return await this.landlordModel.save(landlord);
   }
 }

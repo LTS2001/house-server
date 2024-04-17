@@ -10,6 +10,7 @@ import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { JwtService } from '@midwayjs/jwt';
 import { AuthUtil } from '@/utils/AuthUtil';
 import { LandlordDto, LoginLandlordReq } from '@/dto/user/LandlordDto';
+import { GetLandlordReq, UpdateLandlordStatusReq } from '@/dto/user/AdminDto';
 
 @Controller('/landlord')
 export class LandlordController {
@@ -83,5 +84,24 @@ export class LandlordController {
   async getTenantsByLandlordId() {
     const landlord = this.ctx.user;
     return new ResultUtils().success(await this.landlordService.getTenantsByLandlordId(landlord.id));
+  }
+
+  /**
+   * 管理员获取房东信息
+   */
+  @Post('/admin/get', {middleware: [JwtMiddleware]})
+  async getLandlordByAdmin(@Body() getLandlordReq: GetLandlordReq) {
+    Object.keys(getLandlordReq).forEach(key => {
+      if (!getLandlordReq[key] && getLandlordReq[key] !== 'status' && getLandlordReq[key] !== 0) {
+        delete getLandlordReq[key];
+      }
+    });
+    return new ResultUtils().success(await this.landlordService.getLandlordByAdmin(getLandlordReq));
+  }
+
+  @Put('/admin', {middleware: [JwtMiddleware]})
+  async updateLandlordStatus(@Body() landlordReq: UpdateLandlordStatusReq) {
+    const {status, id} = landlordReq;
+    return new ResultUtils().success(await this.landlordService.updateLandlordStatus(id, status));
   }
 }
