@@ -1,8 +1,5 @@
 import { Body, Controller, File, Get, Inject, Post, Put, Query } from '@midwayjs/core';
 import { TenantService } from 'src/service/user/TenantService';
-import { ValidateUtil } from '@/utils/ValidateUtil';
-import { BusinessException } from '@/exception/BusinessException';
-import { ResponseCode } from '@/common/ResponseFormat';
 import { ResultUtils } from '@/common/ResultUtils';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { AuthUtil } from '@/utils/AuthUtil';
@@ -11,7 +8,7 @@ import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { ToolUtil } from '@/utils/ToolUtil';
-import { GetTenantReq, UpdateTenantStatusReq } from '@/dto/user/AdminDto';
+import { GetTenantReq, LoginReq, UpdateTenantStatusReq } from '@/dto/user/AdminDto';
 
 @Controller('/tenant')
 export class TenantController {
@@ -27,10 +24,11 @@ export class TenantController {
    * @param phone 手机
    */
   @Post('/login')
-  async login(@Body('phone') phone: string) {
-    const flag = ValidateUtil.validatePhone(phone);
-    if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    const tenant = await this.tenantService.login(phone);
+  async login(@Body() loginReq: LoginReq) {
+    const {phone, password} = loginReq;
+    // const flag = ValidateUtil.validatePhone(phone);
+    // if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    const tenant = await this.tenantService.login(phone, password);
     return new ResultUtils().success(tenant);
   }
 

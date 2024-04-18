@@ -6,6 +6,7 @@ import { GetCommentAdminReq } from '@/dto/user/AdminDto';
 import { HouseDao } from '@/dao/house/HouseDao';
 import { LandlordDao } from '@/dao/user/LandlordDao';
 import { TenantDao } from '@/dao/user/TenantDao';
+import { COMMENT_NORMAL } from '@/constant/houseConstant';
 
 @Provide()
 export class CommentService {
@@ -47,18 +48,20 @@ export class CommentService {
   }
 
   async getCommentByHouseId(houseId: number) {
-    return await this.commentDao.getCommentByHouseId(houseId);
+    const commentList = await this.commentDao.getCommentByHouseId(houseId);
+    const list = commentList.filter(c => c.status === COMMENT_NORMAL);
+    return list;
   }
 
   async getCommentByAdmin(getCommentReq: GetCommentAdminReq) {
-    const commentList = await this.commentDao.getCommentByAdmin(getCommentReq);
+    const {commentList, total} = await this.commentDao.getCommentByAdmin(getCommentReq);
     // 获取房东信息
     const landlordList = await this.landlordDao.getLandlordByIds(commentList?.map(r => r.landlordId));
     // 获取房屋信息
     const houseList = await this.houseDao.getHouseByHouseIds(commentList?.map(r => r.houseId));
     // 获取租客信息
     const tenantList = await this.tenantDao.getTenantByIds(commentList?.map(r => r.tenantId));
-    return commentList?.map((comment, idx) => {
+    const list = commentList?.map((comment, idx) => {
       const landlord = landlordList.find(l => l.id === comment.landlordId);
       const tenant = tenantList.find(t => t.id === comment.tenantId);
       return {
@@ -70,6 +73,13 @@ export class CommentService {
         tenantPhone: tenant?.phone
       };
     });
+    const {current, pageSize} = getCommentReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 
   async updateCommentStatus(id: number, status: number) {

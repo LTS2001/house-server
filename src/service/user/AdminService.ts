@@ -91,7 +91,7 @@ export class AdminService {
         admin[key] = adminObj[key];
       }
     });
-    return await this.adminDao.updateAdmin(id, admin);
+    return {...await this.adminDao.updateAdmin(id, admin), password: ''};
   }
 
   /**
@@ -105,6 +105,13 @@ export class AdminService {
   }
 
   async getAdminList(getAdminReq: GetAdminReq) {
-    return await this.adminDao.getAdminList(getAdminReq);
+    const {list, total} = await this.adminDao.getAdminList(getAdminReq);
+    const {current, pageSize} = getAdminReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 }

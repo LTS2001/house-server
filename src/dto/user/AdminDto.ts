@@ -70,6 +70,9 @@ export class UpdateAdminReq {
   @Rule(RuleType.string().empty(''))
   phone: string;
 
+  @Rule(RuleType.string().empty(''))
+  password: string;
+
   /**
    * 用户名
    */
@@ -92,7 +95,7 @@ export class UpdateAdminReq {
   remark: string;
 }
 
-export class UpdateAdminSelfReq extends OmitDto(UpdateAdminReq, ['phone', 'status']) {
+export class UpdateAdminSelfReq extends OmitDto(UpdateAdminReq, ['status']) {
 
 }
 

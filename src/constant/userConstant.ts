@@ -47,3 +47,8 @@ export const LANDLORD = 'LANDLORD';
  * 租客身份
  */
 export const TENANT = 'TENANT';
+
+/**
+ * 用户状态正常
+ */
+export const USER_STATUS_NORMAL = 1;

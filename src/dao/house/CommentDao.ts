@@ -58,12 +58,19 @@ export class CommentDao {
         obj[key] = Like(`%${ getCommentReq[key] }%`);
       }
     });
-    return await this.commentModel.find({
+    const commentList = await this.commentModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.commentModel.count({
+      where: obj
+    });
+    return {
+      commentList,
+      total
+    };
   }
 
   async updateCommentStatus(id: number, status: number) {

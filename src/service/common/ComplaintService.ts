@@ -18,10 +18,11 @@ export class ComplaintService {
   private tenantDao: TenantDao;
 
   async addComplaint(complaintObj: AddComplaintReq) {
-    const {reason, image, video, complaintId, identity} = complaintObj;
+    const {reason, image, video, complaintId, identity, phone} = complaintObj;
     const complaint = new Complaint();
     complaint.complaintId = complaintId;
     complaint.identity = identity;
+    complaint.phone = phone;
     complaint.reason = reason;
     complaint.image = image;
     complaint.video = video;
@@ -33,7 +34,7 @@ export class ComplaintService {
   }
 
   async getComplainByAdmin(getComplainReq: GetComplaintAdminReq) {
-    const complaintList = await this.complaintDao.getComplaintByAdmin(getComplainReq);
+    const {complaintList, total} = await this.complaintDao.getComplaintByAdmin(getComplainReq);
     const landlordIdList: number[] = [];
     const tenantIdList: number[] = [];
     let landlordList: any[];
@@ -54,12 +55,19 @@ export class ComplaintService {
       // 获取租客信息
       tenantList = await this.tenantDao.getTenantByIds(tenantIdList);
     }
-    return complaintList?.map((complaint, idx) => {
+    const list = complaintList?.map((complaint, idx) => {
       return {
         ...complaint,
         complaintName: complaint.identity === 1 ? tenantList.find(t => t.id === complaint.complaintId)?.name : landlordList.find(l => l.id === complaint.complaintId)?.name
       };
     });
+    const {current, pageSize} = getComplainReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 
   async updateComplainByAdmin(id: number, status: number) {

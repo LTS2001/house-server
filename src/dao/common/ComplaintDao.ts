@@ -37,12 +37,19 @@ export class ComplaintDao {
         obj[key] = Like(`%${ getComplainReq[key] }%`);
       }
     });
-    return await this.complaintModel.find({
+    const complaintList = await this.complaintModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.complaintModel.count({
+      where: obj
+    });
+    return {
+      complaintList,
+      total
+    };
   }
 
   async getComplaintById(id: number) {

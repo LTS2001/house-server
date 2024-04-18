@@ -2,6 +2,7 @@ import { Provide } from '@midwayjs/core';
 import { Repository } from 'typeorm';
 import { HouseCollect } from '@/entities/HouseCollect';
 import { InjectEntityModel } from '@midwayjs/orm';
+import { HOUSE_COLLECTED } from '@/constant/houseConstant';
 
 @Provide()
 export class CollectDao {
@@ -63,7 +64,8 @@ export class CollectDao {
    */
   async getCollectHouseByTenantId(tenantId: number) {
     return await this.houseCollectModel.find({
-      where: {tenantId}
+      where: {tenantId, status: HOUSE_COLLECTED},
+      order: {updatedAt: 'desc'}
     });
   }
 }

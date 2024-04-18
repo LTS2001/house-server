@@ -1,8 +1,8 @@
 import { Provide } from '@midwayjs/core';
-import { Like, Repository } from 'typeorm';
+import { Like, Not, Repository } from 'typeorm';
 import { InjectEntityModel } from '@midwayjs/orm';
 import { House } from '@/entities/House';
-import { HOUSE_FORRENT_RELEASED } from '@/constant/houseConstant';
+import { HOUSE_DEL, HOUSE_FORRENT_RELEASED } from '@/constant/houseConstant';
 import { GetHouseAdminReq } from '@/dto/user/AdminDto';
 
 @Provide()
@@ -45,7 +45,7 @@ export class HouseDao {
    */
   async getHouseByLandlordIds(landlordIds: number[]) {
     return await this.houseModel.find({
-      where: landlordIds.map(landlordId => ({landlordId}))
+      where: landlordIds.map(landlordId => ({landlordId, status: Not(HOUSE_DEL)}))
     });
   }
 
@@ -113,12 +113,19 @@ export class HouseDao {
         obj[key] = Like(`%${ getHouseReq[key] }%`);
       }
     });
-    return await this.houseModel.find({
+    const houseList = await this.houseModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.houseModel.count({
+      where: obj
+    });
+    return {
+      houseList,
+      total
+    };
   }
 
   async updateHouseStatus(id: number, status: number) {

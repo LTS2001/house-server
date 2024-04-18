@@ -63,14 +63,14 @@ export class ReportService {
   }
 
   async getReportByAdmin(getReportReq: GetReportReq) {
-    const reportList = await this.reportDao.getReportByAdmin(getReportReq);
+    const {reportList, total} = await this.reportDao.getReportByAdmin(getReportReq);
     // 获取房东信息
     const landlordList = await this.landlordDao.getLandlordByIds(reportList?.map(r => r.landlordId));
     // 获取房屋信息
     const houseList = await this.houseDao.getHouseByHouseIds(reportList?.map(r => r.houseId));
     // 获取租客信息
     const tenantList = await this.tenantDao.getTenantByIds(reportList?.map(r => r.tenantId));
-    return reportList?.map((report, idx) => {
+    const list = reportList?.map((report, idx) => {
       const landlord = landlordList.find(l => l.id === report.landlordId);
       const tenant = tenantList.find(t => t.id === report.tenantId);
       return {
@@ -82,5 +82,12 @@ export class ReportService {
         tenantPhone: tenant?.phone,
       };
     });
+    const {current, pageSize} = getReportReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list
+    };
   }
 }

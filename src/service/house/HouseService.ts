@@ -1,7 +1,7 @@
 import { Inject, Provide } from '@midwayjs/core';
 import { AddressDao } from '@/dao/house/AddressDao';
 import { HouseDao } from '@/dao/house/HouseDao';
-import { houseAddressTableField, houseInfoTableField } from '@/constant/houseConstant';
+import { HOUSE_DEL, houseAddressTableField, houseInfoTableField } from '@/constant/houseConstant';
 import { Landlord } from '@/entities/Landlord';
 import { AddHouseReq, GetHouseKeyWordReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
 import { HouseAddress } from '@/entities/HouseAddress';
@@ -10,6 +10,9 @@ import { IHouseInfo } from '@/typings/house/house';
 import { ToolUtil } from '@/utils/ToolUtil';
 import { LandlordDao } from '@/dao/user/LandlordDao';
 import { GetHouseAdminReq } from '@/dto/user/AdminDto';
+import { LeaseDao } from '@/dao/house/LeaseDao';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
 
 @Provide()
 export class HouseService {
@@ -19,6 +22,8 @@ export class HouseService {
   private houseDao: HouseDao;
   @Inject()
   private landlordDao: LandlordDao;
+  @Inject()
+  private leaseDao: LeaseDao;
 
   /**
    * 获取房屋详细信息通过两个id列表
@@ -245,10 +250,10 @@ export class HouseService {
 
 
   async getHouseByAdmin(getHouseReq: GetHouseAdminReq) {
-    const houseList = await this.houseDao.getHouseByAdmin(getHouseReq);
+    const {houseList, total} = await this.houseDao.getHouseByAdmin(getHouseReq);
     const addressList = await this.addressDao.getHouseAddress(houseList?.map(h => h.addressId));
     const landlordList = await this.landlordDao.getLandlordByIds(houseList?.map(h => h.landlordId));
-    return houseList?.map(house => {
+    const list = houseList?.map(house => {
       const landlord = landlordList?.find(l => l.id === house.landlordId);
       return {
         ...addressList.find(a => a.id === house.addressId),
@@ -257,9 +262,22 @@ export class HouseService {
         landlordPhone: landlord?.phone
       };
     });
+    const {current, pageSize} = getHouseReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 
   async updateHouseStatus(id: number, status: number) {
+    if (status === HOUSE_DEL) {
+      const lease = await this.leaseDao.getLeaseByHouseId(id);
+      if (lease) {
+        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该房屋正在租赁中，无法删除！');
+      }
+    }
     return await this.houseDao.updateHouseStatus(id, status);
   }
 }

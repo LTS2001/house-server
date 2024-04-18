@@ -101,12 +101,19 @@ export class LandlordDao {
     if (status) {
       obj.status = status;
     }
-    return await this.landlordModel.find({
+    const list = await this.landlordModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.landlordModel.count({
+      where: obj
+    });
+    return {
+      list,
+      total
+    };
   }
 
   async updateLandlordStatus(id: number, status: number) {

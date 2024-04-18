@@ -1,7 +1,4 @@
 import { Body, Controller, Files, Get, Inject, Post, Put, Query } from '@midwayjs/core';
-import { ValidateUtil } from '@/utils/ValidateUtil';
-import { BusinessException } from '@/exception/BusinessException';
-import { ResponseCode } from '@/common/ResponseFormat';
 import { LandlordService } from '@/service/user/LandlordService';
 import { ResultUtils } from '@/common/ResultUtils';
 import { Context } from '@midwayjs/koa';
@@ -28,8 +25,8 @@ export class LandlordController {
   @Post('/login')
   async login(@Body() loginReq: LoginLandlordReq) {
     const {phone, password} = loginReq;
-    const flag = ValidateUtil.validatePhone(phone);
-    if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    // const flag = ValidateUtil.validatePhone(phone);
+    // if (!flag) throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
     const landlord = await this.landlordService.login(phone, password);
     return new ResultUtils().success(landlord);
   }

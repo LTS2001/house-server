@@ -7,10 +7,12 @@ import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { LeaseDao } from '@/dao/house/LeaseDao';
-import { TENANT_HEAD_IMG, TENANT_NAME } from '@/constant/userConstant';
+import { TENANT_HEAD_IMG, TENANT_NAME, USER_STATUS_NORMAL } from '@/constant/userConstant';
 import { LEASE_TRAVERSE } from '@/constant/leaseConstant';
 import { HouseService } from '@/service/house/HouseService';
 import { GetTenantReq } from '@/dto/user/AdminDto';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
 
 @Provide()
 export class TenantService {
@@ -33,7 +35,7 @@ export class TenantService {
    * @param phone 手机号
    * @return Tenant 实体
    */
-  async login(phone: string) {
+  async login(phone: string, password: string) {
     let tenant: Tenant;
     // 检测用户是否已经注册，没有注册的，则直接进行注册
     tenant = await this.tenantDao.getTenantByPhone(phone);
@@ -41,9 +43,17 @@ export class TenantService {
     if (!tenant) {
       const tenantObj = new Tenant();
       tenantObj.phone = phone;
+      tenantObj.password = password;
       tenantObj.name = TENANT_NAME;
       tenantObj.headImg = TENANT_HEAD_IMG;
       tenant = await this.tenantDao.addTenant(tenantObj);
+    } else {
+      if (tenant.password !== password) {
+        throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
+      }
+      if (tenant.status !== USER_STATUS_NORMAL) {
+        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该账号异常！');
+      }
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
@@ -75,6 +85,8 @@ export class TenantService {
     // 删除redis里面的key
     await this.redisService.del(phone);
     const tenant = await this.tenantDao.updateTenantHeadImg(phone, imgUrl);
+    // 用户信息存入redis
+    await this.redisService.set(phone, JSON.stringify(tenant));
     return tenant.headImg;
   }
 
@@ -91,7 +103,10 @@ export class TenantService {
     const {name, remark} = updateInfo;
     if (name) tenant.name = name;
     if (remark) tenant.remark = remark;
-    return await this.tenantDao.updateTenant(phone, tenant);
+    // 用户信息存入redis
+    const updateTenant = await this.tenantDao.updateTenant(phone, tenant);
+    await this.redisService.set(phone, JSON.stringify(updateTenant));
+    return updateTenant;
   }
 
   /**
@@ -130,7 +145,14 @@ export class TenantService {
   }
 
   async getTenantByAdmin(getTenantReq: GetTenantReq) {
-    return await this.tenantDao.getTenantByAdmin(getTenantReq);
+    const {list, total} = await this.tenantDao.getTenantByAdmin(getTenantReq);
+    const {current, pageSize} = getTenantReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 
   async updateTenantStatus(id: number, status: number) {

@@ -3,6 +3,7 @@ import { InjectEntityModel } from '@midwayjs/orm';
 import { Like, Repository } from 'typeorm';
 import { Admin } from '@/entities/Admin';
 import { GetAdminReq } from '@/dto/user/AdminDto';
+import { UserAdminConstant } from '@/constant/userConstant';
 
 @Provide()
 export class AdminDao {
@@ -72,11 +73,20 @@ export class AdminDao {
         obj[key] = Like(`%${ getAdminReq[key] }%`);
       }
     });
-    return await this.adminModel.find({
+    obj.role = UserAdminConstant.DefaultRole;
+
+    const list = await this.adminModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.adminModel.count({
+      where: obj
+    });
+    return {
+      list,
+      total
+    };
   }
 }

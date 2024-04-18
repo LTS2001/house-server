@@ -1,10 +1,7 @@
 import { Body, Controller, Del, Get, Inject, Post, Put, Query } from '@midwayjs/core';
 import { AddAdminReq, GetAdminReq, LoginReq, UpdateAdminReq, UpdateAdminSelfReq } from '@/dto/user/AdminDto';
 import { AdminService } from '@/service/user/AdminService';
-import { BusinessException } from '@/exception/BusinessException';
-import { ResponseCode } from '@/common/ResponseFormat';
 import { ResultUtils } from '@/common/ResultUtils';
-import { ValidateUtil } from '@/utils/ValidateUtil';
 import { Context } from '@midwayjs/koa';
 import { Role } from '@/decorator/role';
 import { UserAdminConstant } from '@/constant/userConstant';
@@ -29,9 +26,9 @@ export class AdminController {
   async login(@Body() loginReq: LoginReq) {
     const {phone, password} = loginReq;
     // 手机号校验
-    if (!ValidateUtil.validatePhone(phone)) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    }
+    // if (!ValidateUtil.validatePhone(phone)) {
+    //   throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    // }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
     this.ctx.set('Token', `Bearer ${ this.jwtService.signSync({phone: encryptPhone}) }`);
@@ -47,9 +44,9 @@ export class AdminController {
   @Role(UserAdminConstant.SuperAdminRole)
   async addAdmin(@Body() addAdminReq: AddAdminReq) {
     // 校验手机号是否合法
-    if (!ValidateUtil.validatePhone(addAdminReq.phone)) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    }
+    // if (!ValidateUtil.validatePhone(addAdminReq.phone)) {
+    //   throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    // }
     const userId = await this.adminService.addAdmin(addAdminReq);
     return new ResultUtils().success({id: userId});
   }
@@ -60,10 +57,10 @@ export class AdminController {
    */
   @Del('/')
   async delAdmin(@Query('phone') phone: string) {
-    const flag = ValidateUtil.validatePhone(phone);
-    if (!flag) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    }
+    // const flag = ValidateUtil.validatePhone(phone);
+    // if (!flag) {
+    //   throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    // }
     return new ResultUtils().success(await this.adminService.delAdmin(phone));
   }
 
@@ -75,9 +72,9 @@ export class AdminController {
   @Role(UserAdminConstant.SuperAdminRole)
   async updateAdmin(@Body() updateAdminReq: UpdateAdminReq) {
     // 校验手机号是否合法
-    if (!ValidateUtil.validatePhone(updateAdminReq.phone)) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
-    }
+    // if (!ValidateUtil.validatePhone(updateAdminReq.phone)) {
+    //   throw new BusinessException(ResponseCode.PARAMS_ERROR, '输入的手机号不正确！');
+    // }
     const userId = await this.adminService.updateAdmin(updateAdminReq);
     return new ResultUtils().success({id: userId});
   }

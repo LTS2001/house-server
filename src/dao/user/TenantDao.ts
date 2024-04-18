@@ -91,12 +91,19 @@ export class TenantDao {
     if (status) {
       obj.status = status;
     }
-    return await this.tenantModel.find({
+    const list = await this.tenantModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.tenantModel.count({
+      where: obj
+    });
+    return {
+      list,
+      total
+    };
   }
 
   async updateTenantStatus(id: number, status: number) {

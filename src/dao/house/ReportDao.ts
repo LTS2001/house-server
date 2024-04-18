@@ -70,11 +70,18 @@ export class ReportDao {
         obj[key] = Like(`%${ getReportReq[key] }%`);
       }
     });
-    return await this.reportModel.find({
+    const reportList = await this.reportModel.find({
       where: obj,
       order: {id: 'desc'},
-      skip: current - 1,
+      skip: (current - 1) * pageSize,
       take: pageSize
     });
+    const total = await this.reportModel.count({
+      where: obj
+    });
+    return {
+      reportList,
+      total,
+    };
   }
 }

@@ -6,7 +6,7 @@ import { Context } from '@midwayjs/koa';
 import { RedisService } from '@midwayjs/redis';
 import { JwtService } from '@midwayjs/jwt';
 import { LandlordDto } from '@/dto/user/LandlordDto';
-import { LANDLORD_HEAD_IMG, LANDLORD_NAME } from '@/constant/userConstant';
+import { LANDLORD_HEAD_IMG, LANDLORD_NAME, USER_STATUS_NORMAL } from '@/constant/userConstant';
 import { LeaseDao } from '@/dao/house/LeaseDao';
 import { TenantDao } from '@/dao/user/TenantDao';
 import { BusinessException } from '@/exception/BusinessException';
@@ -49,6 +49,9 @@ export class LandlordService {
       landlord = await this.landlordDao.addLandlord(landlordObj);
     } else {
       if (landlord.password !== password) throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
+      if (landlord.status !== USER_STATUS_NORMAL) {
+        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该账号异常！');
+      }
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
@@ -69,6 +72,8 @@ export class LandlordService {
     // 删除redis里面的key
     await this.redisService.del(phone);
     const userLandlord = await this.landlordDao.updateLandlordHeadImg(phone, imgUrl);
+    // 用户信息存入redis
+    await this.redisService.set(phone, JSON.stringify(userLandlord));
     return userLandlord.headImg;
   }
 
@@ -96,7 +101,10 @@ export class LandlordService {
     const {name, remark} = updateInfo;
     if (name) landlord.name = name;
     if (remark) landlord.remark = remark;
-    return await this.landlordDao.updateLandlord(phone, landlord);
+    const updateLandlord = await this.landlordDao.updateLandlord(phone, landlord);
+    // 用户信息存入redis
+    await this.redisService.set(phone, JSON.stringify(updateLandlord));
+    return updateLandlord;
   }
 
   /**
@@ -117,7 +125,14 @@ export class LandlordService {
   }
 
   async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {
-    return await this.landlordDao.getLandlordByAdmin(getLandlordReq);
+    const {list, total} = await this.landlordDao.getLandlordByAdmin(getLandlordReq);
+    const {current, pageSize} = getLandlordReq;
+    return {
+      total,
+      current,
+      pageSize,
+      list,
+    };
   }
 
   async updateLandlordStatus(id: number, status: number) {

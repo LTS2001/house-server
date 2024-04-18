@@ -17,3 +17,18 @@ export const HOUSE_LEASED = 1;
  * 房屋待租已发布
  */
 export const HOUSE_FORRENT_RELEASED = 2;
+
+/**
+ * 房屋已删除
+ */
+export const HOUSE_DEL = 0;
+
+/**
+ * 评论正常
+ */
+export const COMMENT_NORMAL = 1;
+
+/**
+ * 房屋已收藏
+ */
+export const HOUSE_COLLECTED = 1;

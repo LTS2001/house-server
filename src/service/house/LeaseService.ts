@@ -65,7 +65,10 @@ export class LeaseService {
       const house = new House();
       house.status = HOUSE_LEASED;
       await this.houseDao.updateHouse(houseId, house);
+      // 将其他租客发起的租赁申请全部改为驳回
+      await this.leaseDao.rejectLease(houseId);
     }
+    // 更改该租客的租赁状态
     return await this.leaseDao.updateLeaseStatus({landlordId, tenantId, houseId}, status);
   }
 
@@ -138,5 +141,11 @@ export class LeaseService {
         ...houseInfo, ...refund, leaseId
       };
     });
+  }
+
+  async getLeaseByHouseId(houseId: number) {
+    const lease = await this.leaseDao.getLeaseByHouseId(houseId);
+    if (!lease?.tenantId) return null;
+    return (await this.tenantDao.getTenantByIds([lease.tenantId]))[0];
   }
 }

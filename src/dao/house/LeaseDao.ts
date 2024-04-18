@@ -2,7 +2,7 @@ import { Provide } from '@midwayjs/core';
 import { Repository } from 'typeorm';
 import { HouseLease } from '@/entities/HouseLease';
 import { InjectEntityModel } from '@midwayjs/orm';
-import { LEASE_PENDING, LEASE_TRAVERSE } from '@/constant/leaseConstant';
+import { LEASE_PENDING, LEASE_REJECT, LEASE_TRAVERSE } from '@/constant/leaseConstant';
 
 @Provide()
 export class LeaseDao {
@@ -85,6 +85,19 @@ export class LeaseDao {
   }
 
   /**
+   * 驳回租赁记录
+   */
+  async rejectLease(houseId: number) {
+    const leaseList = await this.houseLeaseModel.find({
+      where: {houseId, status: LEASE_PENDING},
+    });
+    leaseList.forEach(lease => {
+      lease.status = LEASE_REJECT;
+    });
+    return await this.houseLeaseModel.save(leaseList);
+  }
+
+  /**
    * 通过租赁id更新租赁状态
    * @param leaseId 租赁id
    * @param status 租赁状态
@@ -105,6 +118,12 @@ export class LeaseDao {
     return await this.houseLeaseModel.find({
       where: {tenantId},
       order: {updatedAt: 'desc'}
+    });
+  }
+
+  async getLeaseByHouseId(houseId: number) {
+    return await this.houseLeaseModel.findOne({
+      where: {houseId, status: LEASE_TRAVERSE}
     });
   }
 }
