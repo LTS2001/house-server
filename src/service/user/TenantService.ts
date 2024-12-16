@@ -13,6 +13,7 @@ import { HouseService } from '@/service/house/HouseService';
 import { GetTenantReq } from '@/dto/user/AdminDto';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
+import { LandlordDao } from '@/dao/user/LandlordDao';
 
 @Provide()
 export class TenantService {
@@ -28,6 +29,8 @@ export class TenantService {
   private jwtService: JwtService;
   @Inject()
   private leaseDao: LeaseDao;
+  @Inject()
+  private landlordDao: LandlordDao;
 
 
   /**
@@ -37,16 +40,11 @@ export class TenantService {
    */
   async login(phone: string, password: string) {
     let tenant: Tenant;
-    // 检测用户是否已经注册，没有注册的，则直接进行注册
+    // 检测用户是否已经注册
     tenant = await this.tenantDao.getTenantByPhone(phone);
-    // 进行用户注册
+    // 未注册
     if (!tenant) {
-      const tenantObj = new Tenant();
-      tenantObj.phone = phone;
-      tenantObj.password = password;
-      tenantObj.name = TENANT_NAME;
-      tenantObj.headImg = TENANT_HEAD_IMG;
-      tenant = await this.tenantDao.addTenant(tenantObj);
+      throw new BusinessException(ResponseCode.NOT_FOUND_ERROR, '该手机号未注册！')
     } else {
       if (tenant.password !== password) {
         throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
@@ -62,6 +60,30 @@ export class TenantService {
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(tenant));
     return tenant;
+  }
+
+  /**
+   * 注册
+   * @param phone 手机
+   * @param password 密码
+   */
+  async registry (phone: string, password: string) {
+    // 查询是否在房东注册了
+    const landlord = await this.landlordDao.getLandlordByPhone(phone)
+    if(landlord.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已被房东身份注册')
+    }
+    // 查询是否已经注册
+    const tenant = await this.tenantDao.getTenantByPhone(phone);
+    if(tenant.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册')
+    }
+    const tenantObj = new Tenant();
+    tenantObj.phone = phone;
+    tenantObj.password = password;
+    tenantObj.name = TENANT_NAME;
+    tenantObj.headImg = TENANT_HEAD_IMG;
+    return await this.tenantDao.addTenant(tenantObj);
   }
 
   /**

@@ -37,16 +37,11 @@ export class LandlordService {
    */
   async login(phone: string, password: string) {
     let landlord: Landlord;
-    // 检测用户是否已经注册，没有注册的，则直接进行注册
+    // 检测用户是否已经注册
     landlord = await this.landlordDao.getLandlordByPhone(phone);
-    // 进行用户注册
+    // 未注册
     if (!landlord) {
-      const landlordObj = new Landlord();
-      landlordObj.phone = phone;
-      landlordObj.password = password;
-      landlordObj.name = LANDLORD_NAME;
-      landlordObj.headImg = LANDLORD_HEAD_IMG;
-      landlord = await this.landlordDao.addLandlord(landlordObj);
+      throw new BusinessException(ResponseCode.NOT_FOUND_ERROR, '该手机号未注册！')
     } else {
       if (landlord.password !== password) throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
       if (landlord.status !== USER_STATUS_NORMAL) {
@@ -60,6 +55,29 @@ export class LandlordService {
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(landlord));
     return landlord;
+  }
+
+  /**
+   * 注册
+   * @param phone 手机
+   * @param password 密码
+   */
+  async registry (phone: string, password: string) {
+    // 查询是否在租客注册了
+    const tenant = await this.tenantDao.getTenantByPhone(phone)
+    if(tenant.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已被租客身份注册')
+    }
+    const landlord = await this.landlordDao.getLandlordByPhone(phone);
+    if(landlord.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册')
+    }
+    const landlordObj = new Landlord();
+    landlordObj.phone = phone;
+    landlordObj.password = password;
+    landlordObj.name = LANDLORD_NAME;
+    landlordObj.headImg = LANDLORD_HEAD_IMG;
+    return await this.landlordDao.addLandlord(landlordObj);
   }
 
   /**

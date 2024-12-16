@@ -4,17 +4,17 @@ export default {
   // use for cookie sign key, should change to your own and keep security
   keys: '1700985031838_8605',
   koa: {
-    port: 7001,
+    port: 7002,
   },
   webSocket: {
-    port: 7002,
+    port: 7003,
   },
   orm: {
     type: 'mysql',
-    host: '127.0.0.1',
+    host: 'litaosheng.top',
     port: 3306,
     username: 'root',
-    password: 'root',
+    password: '*',
     database: 'house',
     synchronize: true,     // 如果第一次使用，不存在表，有同步的需求可以写 true
     logging: false,
@@ -22,8 +22,8 @@ export default {
   redis: {
     client: {
       port: 6379,
-      host: '127.0.0.1',
-      password: '123456',
+      host: 'litaosheng.top',
+      password: '*',
       db: 0,
     },
   },

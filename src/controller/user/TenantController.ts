@@ -33,6 +33,17 @@ export class TenantController {
   }
 
   /**
+   * 注册
+   * @param registryReq 
+   */
+  @Post('/registry')
+  async registry(@Body() registryReq: LoginReq) {
+    const {phone, password} = registryReq;
+    const tenant = await this.tenantService.registry(phone, password);
+    return new ResultUtils().success(tenant)
+  }
+
+  /**
    * 获取当前租客信息
    */
   @Get('/', {middleware: [JwtMiddleware]})

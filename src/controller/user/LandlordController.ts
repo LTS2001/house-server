@@ -32,6 +32,17 @@ export class LandlordController {
   }
 
   /**
+   * 注册
+   * @param registryReq 
+   */
+  @Post('/registry')
+  async registry(@Body() registryReq: LoginLandlordReq) {
+    const {phone, password} = registryReq;
+    const tenant = await this.landlordService.registry(phone, password);
+    return new ResultUtils().success(tenant)
+  }
+
+  /**
    * 获取当前房东信息
    */
   @Get('/', {middleware: [JwtMiddleware]})
