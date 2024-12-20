@@ -1,9 +1,19 @@
 import { Inject, Provide } from '@midwayjs/core';
 import { AddressDao } from '@/dao/house/AddressDao';
 import { HouseDao } from '@/dao/house/HouseDao';
-import { HOUSE_DEL, houseAddressTableField, houseInfoTableField } from '@/constant/houseConstant';
+import {
+  HOUSE_DEL,
+  HOUSE_FORRENT_RELEASED,
+  houseAddressTableField,
+  houseInfoTableField,
+} from '@/constant/houseConstant';
 import { Landlord } from '@/entities/Landlord';
-import { AddHouseReq, GetHouseKeyWordReq, GetMarkHouseReq, UpdateHouseReq } from '@/dto/house/HouseDto';
+import {
+  AddHouseReq,
+  GetHouseKeyWordReq,
+  GetMarkHouseReq,
+  UpdateHouseReq,
+} from '@/dto/house/HouseDto';
 import { HouseAddress } from '@/entities/HouseAddress';
 import { House } from '@/entities/House';
 import { IHouseInfo } from '@/typings/house/house';
@@ -13,6 +23,8 @@ import { GetHouseAdminReq } from '@/dto/user/AdminDto';
 import { LeaseDao } from '@/dao/house/LeaseDao';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
+import { Context } from '@midwayjs/koa';
+import { USER_STATUS_UN_IDENTITY } from '@/constant/userConstant';
 
 @Provide()
 export class HouseService {
@@ -24,28 +36,34 @@ export class HouseService {
   private landlordDao: LandlordDao;
   @Inject()
   private leaseDao: LeaseDao;
+  @Inject()
+  private ctx: Context;
 
   /**
    * 获取房屋详细信息通过两个id列表
    * @param twoIdList
    */
-  async getHouseByTwoIdList(twoIdList: Array<{ houseId: number, landlordId: number }>) {
+  async getHouseByTwoIdList(
+    twoIdList: Array<{ houseId: number; landlordId: number }>
+  ) {
     // 查询房屋信息
-    const houseList = await this.houseDao.getHouseByHouseIds(
-      [...new Set(twoIdList.map(t => t.houseId))]
-    );
+    const houseList = await this.houseDao.getHouseByHouseIds([
+      ...new Set(twoIdList.map(t => t.houseId)),
+    ]);
     // 查询房东信息
-    const landlordList = await this.landlordDao.getLandlordByIds(
-      [...new Set(twoIdList.map(t => t.landlordId))]
-    );
+    const landlordList = await this.landlordDao.getLandlordByIds([
+      ...new Set(twoIdList.map(t => t.landlordId)),
+    ]);
     // 查询房屋地址信息
-    const addressList = await this.addressDao.getHouseAddress(
-      [...new Set(houseList.map(house => house.addressId))]
-    );
+    const addressList = await this.addressDao.getHouseAddress([
+      ...new Set(houseList.map(house => house.addressId)),
+    ]);
 
-    return twoIdList.map((t) => {
+    return twoIdList.map(t => {
       // 当前的房屋信息
-      const house = JSON.parse(JSON.stringify(houseList.find(h => h.id === t.houseId))) as House;
+      const house = JSON.parse(
+        JSON.stringify(houseList.find(h => h.id === t.houseId))
+      ) as House;
       const houseId = house.id;
       const houseName = house.name;
       const houseImg = house.houseImg;
@@ -53,7 +71,9 @@ export class HouseService {
       delete house.name;
       delete house.houseImg;
       // 当前的房东信息
-      const landlord = JSON.parse(JSON.stringify(landlordList.find(l => l.id === house.landlordId))) as Landlord;
+      const landlord = JSON.parse(
+        JSON.stringify(landlordList.find(l => l.id === house.landlordId))
+      ) as Landlord;
       const landlordId = landlord.id;
       const landlordName = landlord.name;
       const landlordImg = landlord.headImg;
@@ -63,7 +83,9 @@ export class HouseService {
       delete landlord.headImg;
       delete landlord.phone;
       // 当前的房屋地址信息
-      const address = JSON.parse(JSON.stringify(addressList.find(a => a.id === house.addressId))) as HouseAddress;
+      const address = JSON.parse(
+        JSON.stringify(addressList.find(a => a.id === house.addressId))
+      ) as HouseAddress;
       delete address.id;
       return {
         ...address,
@@ -75,10 +97,9 @@ export class HouseService {
         landlordImg,
         landlordPhone,
         landlordId,
-        houseId
+        houseId,
       };
     });
-
   }
 
   /**
@@ -89,19 +110,22 @@ export class HouseService {
    */
   async addHouse(landlord: Landlord, houseObj: AddHouseReq) {
     // 处理house_address表字段
-    const {addressDetail} = houseObj;
+    const { addressDetail } = houseObj;
     const houseAddressTable = new HouseAddress();
     Object.keys(houseObj).forEach(key => {
       if (houseAddressTableField.includes(key))
         houseAddressTable[key] = houseObj[key];
     });
-    const {provinceName, cityName, areaName, addressInfo} = ToolUtil.resolveAddress(addressDetail);
+    const { provinceName, cityName, areaName, addressInfo } =
+      ToolUtil.resolveAddress(addressDetail);
     houseAddressTable.provinceName = provinceName;
     houseAddressTable.cityName = cityName;
     houseAddressTable.areaName = areaName;
     houseAddressTable.addressInfo = addressInfo;
     // 添加房屋地址表数据
-    const houseAddress = await this.addressDao.addHouseAddress(houseAddressTable);
+    const houseAddress = await this.addressDao.addHouseAddress(
+      houseAddressTable
+    );
 
     // 处理house_info表格的字段
     const houseTable = new House();
@@ -123,20 +147,36 @@ export class HouseService {
    * @return House 对象实体
    */
   async updateHouse(house: UpdateHouseReq) {
+    // 房屋发布的时候需要校验当前房东是否已实名
+    if (house.status === HOUSE_FORRENT_RELEASED) {
+      const landlord = await this.landlordDao.getLandlordByPhone(
+        this.ctx.user.phone
+      );
+      if (landlord.status === USER_STATUS_UN_IDENTITY) {
+        throw new BusinessException(
+          ResponseCode.FORBIDDEN_ERROR,
+          '发布前请先前往个人设置进行实名认证'
+        );
+      }
+    }
     // 处理house_address表字段
-    const {addressDetail} = house;
+    const { addressDetail } = house;
     const houseAddressTable = new HouseAddress();
     Object.keys(house).forEach(key => {
       if (houseAddressTableField.includes(key))
         houseAddressTable[key] = house[key];
     });
-    const {provinceName, cityName, areaName, addressInfo} = ToolUtil.resolveAddress(addressDetail);
+    const { provinceName, cityName, areaName, addressInfo } =
+      ToolUtil.resolveAddress(addressDetail);
     houseAddressTable.provinceName = provinceName;
     houseAddressTable.cityName = cityName;
     houseAddressTable.areaName = areaName;
     houseAddressTable.addressInfo = addressInfo;
     // 更新房屋地址信息
-    const updateHouseAddress = await this.addressDao.updateHouseAddress(house.addressId, houseAddressTable);
+    const updateHouseAddress = await this.addressDao.updateHouseAddress(
+      house.addressId,
+      houseAddressTable
+    );
 
     // 处理house表格的字段
     const houseInfoTable = new House();
@@ -146,7 +186,10 @@ export class HouseService {
       }
     });
     // 更新房屋信息
-    const updateHouseInfo = await this.houseDao.updateHouse(house.houseId, houseInfoTable);
+    const updateHouseInfo = await this.houseDao.updateHouse(
+      house.houseId,
+      houseInfoTable
+    );
     const resultHouseInfos: IHouseInfo.IResultHouseInfos = {
       ...updateHouseInfo,
       ...updateHouseAddress,
@@ -164,20 +207,19 @@ export class HouseService {
   async getHouse(landlordId: number) {
     const houseList = await this.houseDao.getHouseByLandlordIds([landlordId]);
     const houseAddressList = await this.addressDao.getHouseAddress(
-      houseList.map(({addressId}) => addressId)
+      houseList.map(({ addressId }) => addressId)
     );
     const houseArr = new Array<IHouseInfo.IResultHouseInfos>();
     houseList.forEach(item => {
-        const obj: any = {
-          ...houseAddressList.find(i => i.id === item.addressId),
-          ...item,
-          houseId: item.id,
-          addressId: item.addressId
-        };
-        delete obj.id;
-        houseArr.push(obj as IHouseInfo.IResultHouseInfos);
-      }
-    );
+      const obj: any = {
+        ...houseAddressList.find(i => i.id === item.addressId),
+        ...item,
+        houseId: item.id,
+        addressId: item.addressId,
+      };
+      delete obj.id;
+      houseArr.push(obj as IHouseInfo.IResultHouseInfos);
+    });
     return houseArr;
   }
 
@@ -189,7 +231,9 @@ export class HouseService {
   async delHouseImg(houseId: number, imgName: string) {
     // 获取房屋信息
     const [house] = await this.houseDao.getHouseByHouseIds([houseId]);
-    house.houseImg = JSON.stringify(JSON.parse(house.houseImg).filter((i: string) => i !== imgName));
+    house.houseImg = JSON.stringify(
+      JSON.parse(house.houseImg).filter((i: string) => i !== imgName)
+    );
     // 保存房屋信息
     return await this.houseDao.updateHouse(houseId, house);
   }
@@ -198,21 +242,25 @@ export class HouseService {
    * 分页获取全部房屋
    */
   async getHouseByPage(getMarkHouseReq: GetMarkHouseReq) {
-    const {minLat, minLng, maxLat, maxLng} = getMarkHouseReq;
+    const { minLat, minLng, maxLat, maxLng } = getMarkHouseReq;
     // 获取房屋信息通过房屋地址 id
-    const houseList = await this.houseDao.getHouseByPage(minLat, minLng, maxLat, maxLng);
+    const houseList = await this.houseDao.getHouseByPage(
+      minLat,
+      minLng,
+      maxLat,
+      maxLng
+    );
     const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
     houseList.forEach(house => {
-        const obj: any = {
-          ...house.address,
-          ...house,
-          houseId: house.id,
-        };
-        delete obj.id;
-        delete obj.address;
-        infoArr.push(obj as IHouseInfo.IResultHouseInfos);
-      }
-    );
+      const obj: any = {
+        ...house.address,
+        ...house,
+        houseId: house.id,
+      };
+      delete obj.id;
+      delete obj.address;
+      infoArr.push(obj as IHouseInfo.IResultHouseInfos);
+    });
     return infoArr;
   }
 
@@ -221,22 +269,27 @@ export class HouseService {
    * @param getHouseReq
    */
   async getHouseByKeyword(getHouseReq: GetHouseKeyWordReq) {
-    const {minLat, minLng, maxLat, maxLng} = getHouseReq;
+    const { minLat, minLng, maxLat, maxLng } = getHouseReq;
     let keyword = getHouseReq.keyword || '';
-    const houseList = await this.houseDao.getHouseByKeyword(minLat, minLng, maxLat, maxLng, keyword);
+    const houseList = await this.houseDao.getHouseByKeyword(
+      minLat,
+      minLng,
+      maxLat,
+      maxLng,
+      keyword
+    );
     const infoArr = new Array<IHouseInfo.IResultHouseInfos>();
     houseList.forEach(house => {
-        delete house.landlord;
-        const obj: any = {
-          ...house.address,
-          ...house,
-          houseId: house.id,
-        };
-        delete obj.id;
-        delete obj.address;
-        infoArr.push(obj as IHouseInfo.IResultHouseInfos);
-      }
-    );
+      delete house.landlord;
+      const obj: any = {
+        ...house.address,
+        ...house,
+        houseId: house.id,
+      };
+      delete obj.id;
+      delete obj.address;
+      infoArr.push(obj as IHouseInfo.IResultHouseInfos);
+    });
     return infoArr;
   }
 
@@ -248,21 +301,26 @@ export class HouseService {
     return await this.houseDao.getHouseByHouseIds(houseIdList);
   }
 
-
   async getHouseByAdmin(getHouseReq: GetHouseAdminReq) {
-    const {houseList, total} = await this.houseDao.getHouseByAdmin(getHouseReq);
-    const addressList = await this.addressDao.getHouseAddress(houseList?.map(h => h.addressId));
-    const landlordList = await this.landlordDao.getLandlordByIds(houseList?.map(h => h.landlordId));
+    const { houseList, total } = await this.houseDao.getHouseByAdmin(
+      getHouseReq
+    );
+    const addressList = await this.addressDao.getHouseAddress(
+      houseList?.map(h => h.addressId)
+    );
+    const landlordList = await this.landlordDao.getLandlordByIds(
+      houseList?.map(h => h.landlordId)
+    );
     const list = houseList?.map(house => {
       const landlord = landlordList?.find(l => l.id === house.landlordId);
       return {
         ...addressList.find(a => a.id === house.addressId),
         ...house,
         landlordName: landlord?.name,
-        landlordPhone: landlord?.phone
+        landlordPhone: landlord?.phone,
       };
     });
-    const {current, pageSize} = getHouseReq;
+    const { current, pageSize } = getHouseReq;
     return {
       total,
       current,
@@ -275,7 +333,10 @@ export class HouseService {
     if (status === HOUSE_DEL) {
       const lease = await this.leaseDao.getLeaseByHouseId(id);
       if (lease) {
-        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该房屋正在租赁中，无法删除！');
+        throw new BusinessException(
+          ResponseCode.FORBIDDEN_ERROR,
+          '该房屋正在租赁中，无法删除！'
+        );
       }
     }
     return await this.houseDao.updateHouseStatus(id, status);

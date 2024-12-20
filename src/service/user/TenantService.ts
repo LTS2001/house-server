@@ -7,7 +7,13 @@ import { Context } from '@midwayjs/koa';
 import { JwtService } from '@midwayjs/jwt';
 import { UpdateTenantReq } from '@/dto/user/TenantDto';
 import { LeaseDao } from '@/dao/house/LeaseDao';
-import { TENANT_HEAD_IMG, TENANT_NAME, USER_STATUS_NORMAL } from '@/constant/userConstant';
+import {
+  TENANT_HEAD_IMG,
+  TENANT_NAME,
+  USER_STATUS_DELETE,
+  USER_STATUS_STOP_USING,
+  USER_STATUS_NORMAL,
+} from '@/constant/userConstant';
 import { LEASE_TRAVERSE } from '@/constant/leaseConstant';
 import { HouseService } from '@/service/house/HouseService';
 import { GetTenantReq } from '@/dto/user/AdminDto';
@@ -32,7 +38,6 @@ export class TenantService {
   @Inject()
   private landlordDao: LandlordDao;
 
-
   /**
    * 登录
    * @param phone 手机号
@@ -44,18 +49,29 @@ export class TenantService {
     tenant = await this.tenantDao.getTenantByPhone(phone);
     // 未注册
     if (!tenant) {
-      throw new BusinessException(ResponseCode.NOT_FOUND_ERROR, '该手机号未注册！')
+      throw new BusinessException(
+        ResponseCode.NOT_FOUND_ERROR,
+        '该手机号未注册！'
+      );
     } else {
       if (tenant.password !== password) {
         throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
       }
-      if (tenant.status !== USER_STATUS_NORMAL) {
-        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该账号异常！');
+      if (
+        [USER_STATUS_STOP_USING, USER_STATUS_DELETE].includes(tenant.status)
+      ) {
+        throw new BusinessException(
+          ResponseCode.FORBIDDEN_ERROR,
+          '该账号异常！'
+        );
       }
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
-    this.ctx.set('Token', `Bearer ${ this.jwtService.signSync({phone: encryptPhone}) }`);
+    this.ctx.set(
+      'Token',
+      `Bearer ${this.jwtService.signSync({ phone: encryptPhone })}`
+    );
     this.ctx.set('Access-Control-Expose-Headers', 'Token');
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(tenant));
@@ -67,16 +83,19 @@ export class TenantService {
    * @param phone 手机
    * @param password 密码
    */
-  async registry (phone: string, password: string) {
+  async registry(phone: string, password: string) {
     // 查询是否在房东注册了
-    const landlord = await this.landlordDao.getLandlordByPhone(phone)
-    if(landlord.id) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已被房东身份注册')
+    const landlord = await this.landlordDao.getLandlordByPhone(phone);
+    if (landlord?.id) {
+      throw new BusinessException(
+        ResponseCode.PARAMS_ERROR,
+        '该手机号已被房东身份注册'
+      );
     }
     // 查询是否已经注册
     const tenant = await this.tenantDao.getTenantByPhone(phone);
-    if(tenant.id) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册')
+    if (tenant?.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册');
     }
     const tenantObj = new Tenant();
     tenantObj.phone = phone;
@@ -119,14 +138,52 @@ export class TenantService {
    * @return Tenant 实体对象
    */
   async updateTenant(phone: string, updateInfo: UpdateTenantReq) {
+    const { identityNumber } = updateInfo;
+    // 校验该身份证号码是否已被他人实名
+    if (identityNumber) {
+      // 先校验该手机号是否已经实名
+      const existTenant = await this.tenantDao.getTenantByPhone(phone);
+      if (existTenant.identityNumber)
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该手机号已实名'
+        );
+      // 查询房东表和租客表
+      const landlord = await this.landlordDao.getLandlordByIdentityNumber(
+        identityNumber
+      );
+      if (landlord?.id) {
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该身份证已被占用，请联系管理员'
+        );
+      }
+      const tenant = await this.tenantDao.getTenantByIdentityNumber(
+        identityNumber
+      );
+      if (tenant?.id) {
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该身份证已被使用，请联系管理员'
+        );
+      }
+    }
+    const tenant = new Tenant();
+    Reflect.ownKeys(updateInfo).forEach(key => {
+      if (updateInfo[key]) {
+        tenant[key] = updateInfo[key];
+      }
+    });
+    // 如果有传递身份证号码，则更改租客的状态为已实名
+    if (identityNumber) {
+      tenant.status = USER_STATUS_NORMAL;
+    }
+    await this.tenantDao.updateTenant(phone, tenant);
+    // 重新查询才可以拿到最新的更新时间
+    const updateTenant = await this.tenantDao.getTenantByPhone(phone);
     // 删除redis里面的key缓存
     await this.redisService.del(phone);
-    const tenant = new Tenant();
-    const {name, remark} = updateInfo;
-    if (name) tenant.name = name;
-    if (remark) tenant.remark = remark;
     // 用户信息存入redis
-    const updateTenant = await this.tenantDao.updateTenant(phone, tenant);
     await this.redisService.set(phone, JSON.stringify(updateTenant));
     return updateTenant;
   }
@@ -140,20 +197,28 @@ export class TenantService {
     const leaseList = await this.leaseDao.getLeaseByTenantId(tenantId);
     const leaseTraverse = leaseList?.filter(l => l.status === LEASE_TRAVERSE);
     const twoIdList = leaseTraverse.map(l => {
-      const {houseId, landlordId} = l;
+      const { houseId, landlordId } = l;
       return {
         houseId,
         landlordId,
       };
     });
-    const houseInfoList = await this.houseService.getHouseByTwoIdList(twoIdList);
+    const houseInfoList = await this.houseService.getHouseByTwoIdList(
+      twoIdList
+    );
     return twoIdList.map(t => {
-      const houseInfo = houseInfoList.find(h => h.landlordId === t.landlordId && h.houseId === t.houseId);
-      const traverse = leaseTraverse.find(r => r.landlordId === t.landlordId && r.houseId === t.houseId);
+      const houseInfo = houseInfoList.find(
+        h => h.landlordId === t.landlordId && h.houseId === t.houseId
+      );
+      const traverse = leaseTraverse.find(
+        r => r.landlordId === t.landlordId && r.houseId === t.houseId
+      );
       const leaseId = traverse.id;
       delete traverse.id;
       return {
-        ...houseInfo, ...traverse, leaseId
+        ...houseInfo,
+        ...traverse,
+        leaseId,
       };
     });
   }
@@ -167,8 +232,8 @@ export class TenantService {
   }
 
   async getTenantByAdmin(getTenantReq: GetTenantReq) {
-    const {list, total} = await this.tenantDao.getTenantByAdmin(getTenantReq);
-    const {current, pageSize} = getTenantReq;
+    const { list, total } = await this.tenantDao.getTenantByAdmin(getTenantReq);
+    const { current, pageSize } = getTenantReq;
     return {
       total,
       current,

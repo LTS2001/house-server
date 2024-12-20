@@ -49,6 +49,21 @@ export const LANDLORD = 'LANDLORD';
 export const TENANT = 'TENANT';
 
 /**
- * 用户状态正常
+ * 用户账号正常
  */
 export const USER_STATUS_NORMAL = 1;
+
+/**
+ * 用户账号停用
+ */
+export const USER_STATUS_STOP_USING = -1;
+
+/**
+ * 用户账号删除
+ */
+export const USER_STATUS_DELETE = 0;
+
+/**
+ * 用户账号未实名
+ */
+export const USER_STATUS_UN_IDENTITY = 2;

@@ -58,7 +58,8 @@ export class ChatSession {
   @Column('datetime', {
     name: 'updated_at',
     comment: '更新时间',
-    default: () => 'CURRENT_TIMESTAMP'
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP'
   })
   updatedAt: Date;
 

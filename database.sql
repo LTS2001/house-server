@@ -11,8 +11,7 @@ create table admin
     remark     varchar(255)                       null comment '备注',
     created_at datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间'
-)
-    engine = InnoDB;
+);
 
 create table chat_session
 (
@@ -23,12 +22,11 @@ create table chat_session
     is_online       int      default 0                 not null comment '发送者是否在线：0(不在线)，1(在线)',
     is_last         int      default 0                 not null comment 'sender 和 receiver 之间该会话是否是最新：0(否)，1(是)',
     unread          int      default 0                 not null comment '发送者消息未读数',
-    created_at      datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updated_at      datetime default CURRENT_TIMESTAMP not null comment '更新时间',
     del_by_sender   int      default 1                 not null comment '该聊天会话是否被sender删除：0(已删除)，1(正常)',
-    del_by_receiver int      default 1                 not null comment '该聊天会话是否被receiver删除：0(已删除)，1(正常)'
-)
-    engine = InnoDB;
+    del_by_receiver int      default 1                 not null comment '该聊天会话是否被receiver删除：0(已删除)，1(正常)',
+    created_at      datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at      datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间'
+);
 
 create table chat_message
 (
@@ -39,14 +37,13 @@ create table chat_message
     receiver_id     varchar(255)                       not null comment '接收者id',
     content         varchar(255)                       not null comment '聊天内容',
     type            int      default 1                 not null comment '消息类型：1(文字)，2(图片)，3(视频)',
-    created_at      datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updated_at      datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     del_by_sender   int      default 1                 not null comment '该消息是否被发送者删除：0(删除)，1(未删除)',
     del_by_receiver int      default 1                 not null comment '该消息是否被接收者删除：0(删除)，1(未删除)',
+    created_at      datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at      datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     constraint FK_c296b04bfe576bed3d1da68d15f
         foreign key (session_id) references chat_session (id)
-)
-    engine = InnoDB;
+);
 
 create index chat_detail_chat_list_id_fk
     on chat_message (session_id);
@@ -55,6 +52,7 @@ create table complaint
 (
     id           int auto_increment
         primary key,
+    phone        varchar(255)                       not null comment '手机号',
     complaint_id int                                not null comment '投诉人id',
     identity     int                                null comment '投诉人身份：1(租客)，2(房东)',
     reason       varchar(255)                       not null comment '投诉原因',
@@ -62,10 +60,8 @@ create table complaint
     video        varchar(255)                       not null comment '投诉视频地址',
     status       int      default -1                not null comment '状态：-1(未处理)，0(删除)，1(已处理)',
     created_at   datetime default CURRENT_TIMESTAMP not null,
-    updated_at   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP,
-    phone        varchar(255)                       not null comment '手机号'
-)
-    engine = InnoDB;
+    updated_at   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP
+);
 
 create table house_address
 (
@@ -80,23 +76,29 @@ create table house_address
     longitude     double(20, 16)                     not null comment '经度',
     created_at    datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updated_at    datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间'
-)
-    engine = InnoDB;
+);
 
 create table landlord
 (
-    id         int auto_increment
+    id               int auto_increment
         primary key,
-    name       varchar(255)                       not null comment '房东名称',
-    phone      varchar(255)                       not null comment '房东手机',
-    head_img   varchar(255)                       null comment '房东头像',
-    status     int      default 1                 not null comment '状态：-1(停用)，0(删除)，1(正常)',
-    remark     varchar(255)                       null comment '备注',
-    created_at datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    password   varchar(255)                       null comment '房东密码'
-)
-    engine = InnoDB;
+    name             varchar(255)                       not null comment '房东名称',
+    phone            varchar(255)                       not null comment '房东手机',
+    password         varchar(255)                       null comment '房东密码',
+    head_img         varchar(255)                       null comment '房东头像',
+    status           int      default 2                 not null comment '状态：-1(停用)，0(删除)，1(已实名)，2(未实名)',
+    remark           varchar(255)                       null comment '备注',
+    created_at       datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at       datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    address          varchar(255)                       null comment '现住址',
+    identity_img     varchar(255)                       null comment '身份证照片',
+    identity_name    varchar(255)                       null comment '身份证名字',
+    identity_number  varchar(255)                       null comment '身份证号码',
+    identity_address varchar(255)                       null comment '身份证地址',
+    identity_sex     int                                null comment '身份证性别：0(女)，1(男)',
+    identity_nation  varchar(255)                       null comment '身份证民族',
+    identity_born    date                               null comment '身份证出生日期'
+);
 
 create table house
 (
@@ -127,8 +129,7 @@ create table house
         foreign key (landlord_id) references landlord (id),
     constraint FK_bdaf522ac29259a0c919f39e4ca
         foreign key (address_id) references house_address (id)
-)
-    engine = InnoDB;
+);
 
 create index house_house_address_id_fk
     on house (address_id);
@@ -138,18 +139,25 @@ create index house_landlord_id_fk
 
 create table tenant
 (
-    id         int auto_increment
+    id               int auto_increment
         primary key,
-    name       varchar(255)                       not null comment '租客名称',
-    phone      varchar(255)                       not null comment '租客手机',
-    password   varchar(255)                       null comment '租客密码',
-    head_img   varchar(255)                       null comment '租客头像',
-    status     int      default 1                 not null comment '状态：-1(停用)，0(删除)，1(正常)',
-    remark     varchar(255)                       null comment '备注',
-    created_at datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updated_at datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间'
-)
-    engine = InnoDB;
+    name             varchar(255)                       not null comment '租客名称',
+    phone            varchar(255)                       not null comment '租客手机',
+    password         varchar(255)                       null comment '租客密码',
+    head_img         varchar(255)                       null comment '租客头像',
+    status           int      default 2                 not null comment '状态：-1(停用)，0(删除)，1(已实名)，2(未实名)',
+    remark           varchar(255)                       null comment '备注',
+    created_at       datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at       datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    address          varchar(255)                       null comment '现住址',
+    identity_img     varchar(255)                       null comment '身份证照片',
+    identity_name    varchar(255)                       null comment '身份证名字',
+    identity_number  varchar(255)                       null comment '身份证号码',
+    identity_address varchar(255)                       null comment '身份证地址',
+    identity_sex     int                                null comment '身份证性别：0(女)，1(男)',
+    identity_nation  varchar(255)                       null comment '身份证民族',
+    identity_born    date                               null comment '身份证出生日期'
+);
 
 create table house_collect
 (
@@ -167,8 +175,7 @@ create table house_collect
         foreign key (tenant_id) references tenant (id),
     constraint FK_8e4f9a5d240018464cb59288935
         foreign key (landlord_id) references landlord (id)
-)
-    engine = InnoDB;
+);
 
 create index house_collect_house_id_fk
     on house_collect (house_id);
@@ -195,8 +202,7 @@ create table house_lease
         foreign key (house_id) references house (id),
     constraint FK_dba42d7a3973d6ec2393d836e5b
         foreign key (landlord_id) references landlord (id)
-)
-    engine = InnoDB;
+);
 
 create table house_comment
 (
@@ -210,9 +216,9 @@ create table house_comment
     landlord_score int                                not null comment '房东评分',
     comment        varchar(255)                       null comment '文字评价',
     image          varchar(255)                       null comment '图片',
+    status         int      default 1                 not null comment '状态：0(删除)，1(正常)',
     created_at     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updated_at     datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    status         int      default 1                 not null comment '状态：0(删除)，1(正常)',
     constraint FK_03e94cde8e91dac56ca9f52699e
         foreign key (tenant_id) references tenant (id),
     constraint FK_3649d57c52f029d5f5ea55adb4c
@@ -221,8 +227,7 @@ create table house_comment
         foreign key (house_id) references house (id),
     constraint FK_f46f1e41c748b1c5b62c7b14884
         foreign key (lease_id) references house_lease (id)
-)
-    engine = InnoDB;
+);
 
 create index house_comment_house_id_fk
     on house_comment (house_id);
@@ -264,8 +269,7 @@ create table house_report
         foreign key (tenant_id) references tenant (id),
     constraint FK_edde454d1680622cc650a7528bc
         foreign key (landlord_id) references landlord (id)
-)
-    engine = InnoDB;
+);
 
 create index house_report_house_id_fk
     on house_report (house_id);
@@ -275,5 +279,4 @@ create index house_report_landlord_id_fk
 
 create index house_report_tenant_id_fk
     on house_report (tenant_id);
-
 

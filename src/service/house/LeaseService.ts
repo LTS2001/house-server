@@ -11,6 +11,7 @@ import { LEASE_PENDING, LEASE_REFUND, LEASE_TRAVERSE } from '@/constant/leaseCon
 import { House } from '@/entities/House';
 import { HOUSE_FORRENT_RELEASED, HOUSE_LEASED } from '@/constant/houseConstant';
 import { HouseService } from '@/service/house/HouseService';
+import { USER_STATUS_UN_IDENTITY } from '@/constant/userConstant';
 
 @Provide()
 export class LeaseService {
@@ -31,6 +32,11 @@ export class LeaseService {
    */
   async initiateLease(leaseObj: InitiateLeaseReq) {
     const {houseId, landlordId, tenantId} = leaseObj;
+    // 校验该租客是否已实名
+    const [tenant] = await this.tenantDao.getTenantByIds([tenantId])
+    if(tenant.status === USER_STATUS_UN_IDENTITY) {
+      throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '请在个人设置中先进行实名认证')
+    }
     // 检查该房屋是否已租赁
     const checkLease = await this.leaseDao.checkHouseLeaseStatus(houseId, landlordId, tenantId);
     if (checkLease?.status === LEASE_TRAVERSE) { // 租赁记录标志为（通过租赁），则抛出错误

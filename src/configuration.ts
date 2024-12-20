@@ -10,7 +10,7 @@ import * as crossDomain from '@midwayjs/cross-domain';
 import * as jwt from '@midwayjs/jwt';
 import * as upload from '@midwayjs/upload';
 import * as ws from '@midwayjs/ws';
-import { ReportMiddleware } from './middleware/report.middleware';
+import { GlobalMiddleware } from './middleware/GlobalMiddleware';
 import { ValidationFilter } from './filter/ValidationFilter';
 import { BusinessFilter } from '@/filter/BusinessFilter';
 import { NotfoundFilter } from '@/filter/NotfoundFilter';
@@ -40,7 +40,7 @@ export class MainConfiguration {
 
   async onReady() {
     // add middleware
-    this.app.useMiddleware([ReportMiddleware]);
+    this.app.useMiddleware([GlobalMiddleware]);
     // add filter
     this.app.useFilter([BusinessFilter, ValidationFilter, NotfoundFilter, DefaultFilter]);
   }

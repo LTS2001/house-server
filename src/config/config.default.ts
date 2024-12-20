@@ -38,7 +38,7 @@ export default {
     expiresIn: '10d',
   },
   upload: {
-    tmpdir: 'F:/GraduationDesign/static-img',
+    tmpdir: '/var/www/static',
     cleanTimeout: 0,
   }
 } as MidwayConfig;

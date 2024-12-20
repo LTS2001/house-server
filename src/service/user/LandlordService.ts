@@ -6,7 +6,13 @@ import { Context } from '@midwayjs/koa';
 import { RedisService } from '@midwayjs/redis';
 import { JwtService } from '@midwayjs/jwt';
 import { LandlordDto } from '@/dto/user/LandlordDto';
-import { LANDLORD_HEAD_IMG, LANDLORD_NAME, USER_STATUS_NORMAL } from '@/constant/userConstant';
+import {
+  LANDLORD_HEAD_IMG,
+  LANDLORD_NAME,
+  USER_STATUS_DELETE,
+  USER_STATUS_NORMAL,
+  USER_STATUS_STOP_USING,
+} from '@/constant/userConstant';
 import { LeaseDao } from '@/dao/house/LeaseDao';
 import { TenantDao } from '@/dao/user/TenantDao';
 import { BusinessException } from '@/exception/BusinessException';
@@ -28,7 +34,6 @@ export class LandlordService {
   @Inject()
   private tenantDao: TenantDao;
 
-
   /**
    * 登录
    * @param phone 手机号
@@ -41,16 +46,28 @@ export class LandlordService {
     landlord = await this.landlordDao.getLandlordByPhone(phone);
     // 未注册
     if (!landlord) {
-      throw new BusinessException(ResponseCode.NOT_FOUND_ERROR, '该手机号未注册！')
+      throw new BusinessException(
+        ResponseCode.NOT_FOUND_ERROR,
+        '该手机号未注册！'
+      );
     } else {
-      if (landlord.password !== password) throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
-      if (landlord.status !== USER_STATUS_NORMAL) {
-        throw new BusinessException(ResponseCode.FORBIDDEN_ERROR, '该账号异常！');
+      if (landlord.password !== password)
+        throw new BusinessException(ResponseCode.PARAMS_ERROR, '密码错误！');
+      if (
+        [USER_STATUS_STOP_USING, USER_STATUS_DELETE].includes(landlord.status)
+      ) {
+        throw new BusinessException(
+          ResponseCode.FORBIDDEN_ERROR,
+          '该账号异常！'
+        );
       }
     }
     const encryptPhone = CryptoUtil.encryptStr(phone);
     // 设置JWT响应头
-    this.ctx.set('Token', `Bearer ${ this.jwtService.signSync({phone: encryptPhone}) }`);
+    this.ctx.set(
+      'Token',
+      `Bearer ${this.jwtService.signSync({ phone: encryptPhone })}`
+    );
     this.ctx.set('Access-Control-Expose-Headers', 'Token');
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(landlord));
@@ -62,15 +79,18 @@ export class LandlordService {
    * @param phone 手机
    * @param password 密码
    */
-  async registry (phone: string, password: string) {
+  async registry(phone: string, password: string) {
     // 查询是否在租客注册了
-    const tenant = await this.tenantDao.getTenantByPhone(phone)
-    if(tenant.id) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已被租客身份注册')
+    const tenant = await this.tenantDao.getTenantByPhone(phone);
+    if (tenant?.id) {
+      throw new BusinessException(
+        ResponseCode.PARAMS_ERROR,
+        '该手机号已被租客身份注册'
+      );
     }
     const landlord = await this.landlordDao.getLandlordByPhone(phone);
-    if(landlord.id) {
-      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册')
+    if (landlord?.id) {
+      throw new BusinessException(ResponseCode.PARAMS_ERROR, '该手机号已注册');
     }
     const landlordObj = new Landlord();
     landlordObj.phone = phone;
@@ -89,7 +109,10 @@ export class LandlordService {
   async updateHeadImg(phone: string, imgUrl: string) {
     // 删除redis里面的key
     await this.redisService.del(phone);
-    const userLandlord = await this.landlordDao.updateLandlordHeadImg(phone, imgUrl);
+    const userLandlord = await this.landlordDao.updateLandlordHeadImg(
+      phone,
+      imgUrl
+    );
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(userLandlord));
     return userLandlord.headImg;
@@ -113,13 +136,51 @@ export class LandlordService {
    * @return Landlord 实体对象
    */
   async updateLandlord(phone: string, updateInfo: LandlordDto) {
+    const { identityNumber } = updateInfo;
+    // 校验该身份证号码是否已被他人实名
+    if (identityNumber) {
+      // 先校验该手机号是否已经实名
+      const existLandlord = await this.landlordDao.getLandlordByPhone(phone);
+      if (existLandlord.identityNumber)
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该手机号已实名'
+        );
+      // 查询房东表和租客表
+      const landlord = await this.landlordDao.getLandlordByIdentityNumber(
+        identityNumber
+      );
+      if (landlord?.id) {
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该身份证已被占用，请联系管理员'
+        );
+      }
+      const tenant = await this.tenantDao.getTenantByIdentityNumber(
+        identityNumber
+      );
+      if (tenant?.id) {
+        throw new BusinessException(
+          ResponseCode.PARAMS_ERROR,
+          '该身份证已被占用，请联系管理员'
+        );
+      }
+    }
+    const landlord = new Landlord();
+    Reflect.ownKeys(updateInfo).forEach(key => {
+      if (updateInfo[key]) {
+        landlord[key] = updateInfo[key];
+      }
+    });
+    // 如果有传递身份证号码，则更改房东的状态为已实名
+    if (identityNumber) {
+      landlord.status = USER_STATUS_NORMAL;
+    }
+    await this.landlordDao.updateLandlord(phone, landlord);
+    // 重新查询才可以拿到最新的更新时间
+    const updateLandlord = await this.landlordDao.getLandlordByPhone(phone);
     // 删除redis里面的key缓存
     await this.redisService.del(phone);
-    const landlord = new Landlord();
-    const {name, remark} = updateInfo;
-    if (name) landlord.name = name;
-    if (remark) landlord.remark = remark;
-    const updateLandlord = await this.landlordDao.updateLandlord(phone, landlord);
     // 用户信息存入redis
     await this.redisService.set(phone, JSON.stringify(updateLandlord));
     return updateLandlord;
@@ -139,12 +200,14 @@ export class LandlordService {
    */
   async getTenantsByLandlordId(landlordId: number) {
     const lease = await this.leaseDao.getLeaseByLandlordId(landlordId);
-    return await this.tenantDao.getTenantByIds(lease.map(l => (l.tenantId)));
+    return await this.tenantDao.getTenantByIds(lease.map(l => l.tenantId));
   }
 
   async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {
-    const {list, total} = await this.landlordDao.getLandlordByAdmin(getLandlordReq);
-    const {current, pageSize} = getLandlordReq;
+    const { list, total } = await this.landlordDao.getLandlordByAdmin(
+      getLandlordReq
+    );
+    const { current, pageSize } = getLandlordReq;
     return {
       total,
       current,

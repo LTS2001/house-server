@@ -67,8 +67,8 @@ export class LandlordController {
    */
   @Post('/headImg', {middleware: [JwtMiddleware]})
   async updateUserHeadImg(@Files() files: any) {
-    const imgUrlArr = files[0].data?.split('\\');
-    const imgUrl = imgUrlArr[imgUrlArr.length - 1];
+    const imgUrlArr = files[0].data?.split('/');
+    const imgUrl = '/' + imgUrlArr[imgUrlArr.length - 1];
     const {phone} = this.ctx.user;
     const url = await this.landlordService.updateHeadImg(phone, imgUrl);
     return new ResultUtils().success<string>(url);

@@ -6,21 +6,29 @@ import { HouseComment } from './HouseComment';
 import { HouseLease } from './HouseLease';
 import { HouseReport } from './HouseReport';
 
-@EntityModel('landlord', {schema: 'house'})
+@EntityModel('landlord', { schema: 'house' })
 export class Landlord {
-  @PrimaryGeneratedColumn({type: 'int', name: 'id'})
+  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
   id: number;
 
-  @Column('varchar', {name: 'name', comment: '房东名称', length: 255})
+  @Column('varchar', { name: 'name', comment: '房东名称', length: 255 })
   name: string;
 
-  @Column('varchar', {name: 'phone', comment: '房东手机', length: 255})
+  @Column('varchar', {
+    name: 'address',
+    nullable: true,
+    comment: '现住址',
+    length: 255,
+  })
+  address: string | null;
+
+  @Column('varchar', { name: 'phone', comment: '房东手机', length: 255 })
   phone: string;
 
-  @Column("varchar", {
-    name: "password",
+  @Column('varchar', {
+    name: 'password',
     nullable: true,
-    comment: "房东密码",
+    comment: '房东密码',
     length: 255,
   })
   password: string | null;
@@ -33,10 +41,64 @@ export class Landlord {
   })
   headImg: string | null;
 
+  @Column('varchar', {
+    name: 'identity_img',
+    nullable: true,
+    comment: '身份证照片',
+    length: 255,
+  })
+  identityImg: string | null;
+
+  @Column('varchar', {
+    name: 'identity_name',
+    nullable: true,
+    comment: '身份证名字',
+    length: 255,
+  })
+  identityName: string | null;
+
+  @Column('varchar', {
+    name: 'identity_number',
+    nullable: true,
+    comment: '身份证号码',
+    length: 255,
+  })
+  identityNumber: string | null;
+
+  @Column('varchar', {
+    name: 'identity_address',
+    nullable: true,
+    comment: '身份证地址',
+    length: 255,
+  })
+  identityAddress: string | null;
+
+  @Column('int', {
+    name: 'identity_sex',
+    nullable: true,
+    comment: '身份证性别：0(女)，1(男)',
+  })
+  identitySex: number | null;
+
+  @Column('varchar', {
+    name: 'identity_nation',
+    nullable: true,
+    comment: '身份证民族',
+    length: 255,
+  })
+  identityNation: string | null;
+
+  @Column('date', {
+    name: 'identity_born',
+    nullable: true,
+    comment: '身份证出生日期',
+  })
+  identityBorn: Date | null;
+
   @Column('int', {
     name: 'status',
-    comment: '状态：-1(停用)，0(删除)，1(正常)',
-    default: () => '\'1\'',
+    comment: '状态：-1(停用)，0(删除)，1(已实名)，2(未实名)',
+    default: () => "'2'",
   })
   status: number;
 
@@ -63,18 +125,18 @@ export class Landlord {
   })
   updatedAt: Date;
 
-  @OneToMany(() => House, (house) => house.landlord)
+  @OneToMany(() => House, house => house.landlord)
   houses: House[];
 
-  @OneToMany(() => HouseCollect, (houseCollect) => houseCollect.landlord)
+  @OneToMany(() => HouseCollect, houseCollect => houseCollect.landlord)
   houseCollects: HouseCollect[];
 
-  @OneToMany(() => HouseComment, (houseComment) => houseComment.landlord)
+  @OneToMany(() => HouseComment, houseComment => houseComment.landlord)
   houseComments: HouseComment[];
 
-  @OneToMany(() => HouseLease, (houseLease) => houseLease.landlord)
+  @OneToMany(() => HouseLease, houseLease => houseLease.landlord)
   houseLeases: HouseLease[];
 
-  @OneToMany(() => HouseReport, (houseReport) => houseReport.landlord)
+  @OneToMany(() => HouseReport, houseReport => houseReport.landlord)
   houseReports: HouseReport[];
 }

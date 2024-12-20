@@ -16,7 +16,7 @@ export class LandlordDao {
    */
   async getLandlordByPhone(phone: string) {
     return await this.landlordModel.findOne({
-      where: {phone}
+      where: { phone },
     });
   }
 
@@ -41,7 +41,7 @@ export class LandlordDao {
    */
   async updateLandlordHeadImg(phone: string, imgUrl: string) {
     const landlord = await this.landlordModel.findOne({
-      where: {phone}
+      where: { phone },
     });
     landlord.headImg = imgUrl;
     return await this.landlordModel.save(landlord);
@@ -54,7 +54,7 @@ export class LandlordDao {
    */
   async getLandlord(phone: string) {
     return await this.landlordModel.findOne({
-      where: {phone}
+      where: { phone },
     });
   }
 
@@ -65,7 +65,7 @@ export class LandlordDao {
    */
   async updateLandlord(phone: string, landlordObj: Landlord) {
     const landlord = await this.landlordModel.findOne({
-      where: {phone}
+      where: { phone },
     });
     Object.keys(landlordObj).forEach(item => {
       landlord[item] = landlordObj[item];
@@ -79,48 +79,59 @@ export class LandlordDao {
    */
   async getLandlordByIds(LandlordIds: Array<number>) {
     return await this.landlordModel.find({
-      where: LandlordIds.map(id => ({id}))
+      where: LandlordIds.map(id => ({ id })),
     });
   }
 
   async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {
-    const {current, pageSize, id, name, phone, status, remark} = getLandlordReq;
+    const { current, pageSize, id, name, phone, status, remark } =
+      getLandlordReq;
     const obj: any = {};
     if (id) {
       obj.id = id;
     }
     if (name) {
-      obj.name = Like(`%${ name }%`);
+      obj.name = Like(`%${name}%`);
     }
     if (phone) {
-      obj.phone = Like(`%${ phone }%`);
+      obj.phone = Like(`%${phone}%`);
     }
     if (remark) {
-      obj.remark = Like(`%${ remark }%`);
+      obj.remark = Like(`%${remark}%`);
     }
     if (status) {
       obj.status = status;
     }
     const list = await this.landlordModel.find({
       where: obj,
-      order: {id: 'desc'},
+      order: { id: 'desc' },
       skip: (current - 1) * pageSize,
-      take: pageSize
+      take: pageSize,
     });
     const total = await this.landlordModel.count({
-      where: obj
+      where: obj,
     });
     return {
       list,
-      total
+      total,
     };
   }
 
   async updateLandlordStatus(id: number, status: number) {
     const landlord = await this.landlordModel.findOne({
-      where: {id}
+      where: { id },
     });
     landlord.status = status;
     return await this.landlordModel.save(landlord);
+  }
+
+  /**
+   * 获取房东信息通过身份证号码
+   * @param identityNumber 身份证号码
+   */
+  async getLandlordByIdentityNumber(identityNumber: string) {
+    return await this.landlordModel.findOne({
+      where: { identityNumber },
+    });
   }
 }

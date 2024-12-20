@@ -77,8 +77,8 @@ export class TenantController {
    */
   @Post('/headImg', {middleware: [JwtMiddleware]})
   async updateTenantHeadImg(@File() file: any) {
-    const imgUrlArr = file.data?.split('\\');
-    const imgUrl = imgUrlArr[imgUrlArr.length - 1];
+    const imgUrlArr = file.data?.split('/');
+    const imgUrl = '/' + imgUrlArr[imgUrlArr.length - 1];
     const {phone} = this.ctx.user;
     const url = await this.tenantService.updateTenantHeadImg(phone, imgUrl);
     return new ResultUtils().success<string>(url);
