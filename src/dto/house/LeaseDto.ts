@@ -11,6 +11,9 @@ export class InitiateLeaseReq {
 
   @Rule(RuleNumRequired)
   tenantId: number;
+
+  @Rule(RuleType.number().empty(''))
+  leaseMonths: number
 }
 
 export class GetLeaseReq extends OmitDto(InitiateLeaseReq, ['landlordId']) {

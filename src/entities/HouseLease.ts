@@ -23,6 +23,13 @@ export class HouseLease {
   tenantId: number;
 
   @Column('int', {
+    name: 'lease_months',
+    comment: '租赁月数',
+    default: () => '\'6\''
+  })
+  leaseMonths: number;
+
+  @Column('int', {
     name: 'status',
     comment: '状态：-1(未处理)，0(已驳回)，1(已通过->已租赁)，2(已退租)',
     default: () => '\'-1\'',

@@ -18,6 +18,9 @@ import { TenantDao } from '@/dao/user/TenantDao';
 import { BusinessException } from '@/exception/BusinessException';
 import { ResponseCode } from '@/common/ResponseFormat';
 import { GetLandlordReq } from '@/dto/user/AdminDto';
+import { HouseDao } from '@/dao/house/HouseDao';
+import { AddressDao } from '@/dao/house/AddressDao';
+import { Lease } from '@/utils/ServiceUtil';
 
 @Provide()
 export class LandlordService {
@@ -33,6 +36,10 @@ export class LandlordService {
   private leaseDao: LeaseDao;
   @Inject()
   private tenantDao: TenantDao;
+  @Inject()
+  private houseDao: HouseDao;
+  @Inject()
+  private addressDao: AddressDao;
 
   /**
    * 登录
@@ -199,8 +206,32 @@ export class LandlordService {
    * @param landlordId
    */
   async getTenantsByLandlordId(landlordId: number) {
-    const lease = await this.leaseDao.getLeaseByLandlordId(landlordId);
-    return await this.tenantDao.getTenantByIds(lease.map(l => l.tenantId));
+    // 查询当前房东已经通过租赁的租客
+    const leaseList = await this.leaseDao.getLeaseByLandlordId(landlordId);
+    // 查询房屋信息
+    const houseList = await this.houseDao.getHouseByHouseIds(
+      leaseList.map(l => l.houseId)
+    );
+    // 查询房屋地址信息
+    const addressList = await this.addressDao.getHouseAddress(
+      houseList.map(h => h.addressId)
+    );
+    // 查询租客信息
+    const tenantList = await this.tenantDao.getTenantByIds(
+      leaseList.map(l => l.tenantId)
+    );
+    return leaseList.map(lease => {
+      const house = houseList.find(h => h.id === lease.houseId);
+      const address = addressList.find(a => a.id === house.addressId);
+      const tenant = tenantList.find(t => t.id === lease.tenantId);
+      return Lease.formatLeaseMsg({
+        house,
+        address,
+        tenant,
+        lease,
+        landlordId,
+      });
+    });
   }
 
   async getLandlordByAdmin(getLandlordReq: GetLandlordReq) {

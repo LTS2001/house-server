@@ -193,6 +193,7 @@ create table house_lease
     house_id    int                                not null comment '房屋id',
     landlord_id int                                not null comment '房东id',
     tenant_id   int                                not null comment '租客id',
+    lease_months int                               not null comment '租赁月数',
     status      int      default -1                not null comment '状态：-1(未处理)，0(已驳回)，1(已通过->已租赁)，2(已退租)',
     created_at  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
     updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
