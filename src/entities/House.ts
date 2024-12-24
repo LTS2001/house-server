@@ -6,6 +6,7 @@ import { HouseCollect } from './HouseCollect';
 import { HouseComment } from './HouseComment';
 import { HouseLease } from './HouseLease';
 import { HouseReport } from './HouseReport';
+import { RentBill } from "./RentBill";
 
 @Index('house_house_address_id_fk', ['addressId'], {})
 @Index('house_landlord_id_fk', ['landlordId'], {})
@@ -139,4 +140,7 @@ export class House {
 
   @OneToMany(() => HouseReport, (houseReport) => houseReport.house)
   houseReports: HouseReport[];
+
+  @OneToMany(() => RentBill, (rentBill) => rentBill.house)
+  rentBills: RentBill[];
 }

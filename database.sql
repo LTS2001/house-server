@@ -188,15 +188,15 @@ create index house_collect_tenant_id_fk
 
 create table house_lease
 (
-    id          int auto_increment
+    id           int auto_increment
         primary key,
-    house_id    int                                not null comment '房屋id',
-    landlord_id int                                not null comment '房东id',
-    tenant_id   int                                not null comment '租客id',
-    lease_months int                               not null comment '租赁月数',
-    status      int      default -1                not null comment '状态：-1(未处理)，0(已驳回)，1(已通过->已租赁)，2(已退租)',
-    created_at  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updated_at  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    house_id     int                                not null comment '房屋id',
+    landlord_id  int                                not null comment '房东id',
+    tenant_id    int                                not null comment '租客id',
+    lease_months int      default 6                 not null comment '租赁月数',
+    status       int      default -1                not null comment '状态：-1(未处理)，0(已驳回)，1(已通过->已租赁)，2(已退租)',
+    created_at   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
     constraint FK_52dc616ba005e371d3ce4fbdc1f
         foreign key (tenant_id) references tenant (id),
     constraint FK_c430279e4b96fd85957a5071d23
@@ -280,4 +280,30 @@ create index house_report_landlord_id_fk
 
 create index house_report_tenant_id_fk
     on house_report (tenant_id);
+
+create table rent_bill
+(
+    id                     int auto_increment
+        primary key,
+    landlord_id            int                                not null comment '房东id',
+    tenant_id              int                                not null comment '租客id',
+    house_id               int                                not null comment '房屋id',
+    last_electricity_meter int                                null comment '上个月的电表记录值',
+    electricity_meter      int                                not null comment '电表记录值',
+    last_water_meter       int                                null comment '上个月的水表记录值',
+    water_meter            int                                not null comment '水表记录值',
+    last_fuel_meter        int                                null comment '上个月的燃气表记录值',
+    fuel_meter             int                                not null comment '燃气表记录值',
+    bill_date              date                               not null comment '账单年月份',
+    total_price            int      default 0                 not null comment '账单总钱数',
+    created_at             datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updated_at             datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    constraint rent_bill_house_id_fk
+        foreign key (house_id) references house (id),
+    constraint rent_bill_landlord__fk
+        foreign key (landlord_id) references landlord (id),
+    constraint rent_bill_tenant_id_fk
+        foreign key (tenant_id) references tenant (id)
+)
+    comment '租金账单表';
 

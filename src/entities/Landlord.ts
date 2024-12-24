@@ -5,6 +5,7 @@ import { HouseCollect } from './HouseCollect';
 import { HouseComment } from './HouseComment';
 import { HouseLease } from './HouseLease';
 import { HouseReport } from './HouseReport';
+import { RentBill } from "./RentBill";
 
 @EntityModel('landlord', { schema: 'house' })
 export class Landlord {
@@ -139,4 +140,7 @@ export class Landlord {
 
   @OneToMany(() => HouseReport, houseReport => houseReport.landlord)
   houseReports: HouseReport[];
+
+  @OneToMany(() => RentBill, (rentBill) => rentBill.landlord)
+  rentBills: RentBill[];
 }
