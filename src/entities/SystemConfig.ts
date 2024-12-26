@@ -12,4 +12,11 @@ export class SystemConfig {
     comment: '实名认证的入口（1开启，0关闭）',
   })
   verificationEntry: number | null;
+
+  @Column('int', {
+    name: 'registry_entry',
+    nullable: true,
+    comment: '注册的入口（1开启，0关闭）',
+  })
+  registryEntry: number | null;
 }
