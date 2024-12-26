@@ -311,5 +311,6 @@ create table system_config
 (
     id                 int auto_increment
         primary key,
-    verification_entry int null comment '实名认证的入口（1开启，0关闭）'
+    verification_entry int null comment '实名认证的入口（1开启，0关闭）',
+    registry_entry     int null comment '注册入口（1开启，0关闭）'
 );
