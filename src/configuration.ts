@@ -15,6 +15,7 @@ import { ValidationFilter } from './filter/ValidationFilter';
 import { BusinessFilter } from '@/filter/BusinessFilter';
 import { NotfoundFilter } from '@/filter/NotfoundFilter';
 import { DefaultFilter } from '@/filter/DefaultFilter';
+import { WechatOfficialUtil } from '@/utils/WechatOfficialUtil';
 
 @Configuration({
   imports: [
@@ -39,9 +40,16 @@ export class MainConfiguration {
   app: koa.Application;
 
   async onReady() {
+    // 微信公众号获取access_token
+    await WechatOfficialUtil.getAccessToken();
     // add middleware
     this.app.useMiddleware([GlobalMiddleware]);
     // add filter
-    this.app.useFilter([BusinessFilter, ValidationFilter, NotfoundFilter, DefaultFilter]);
+    this.app.useFilter([
+      BusinessFilter,
+      ValidationFilter,
+      NotfoundFilter,
+      DefaultFilter,
+    ]);
   }
 }

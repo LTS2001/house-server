@@ -20,7 +20,7 @@ export class GlobalMiddleware implements IMiddleware<Context, NextFunction> {
         }ms`
       );
       // 作为全局中间件，需要过滤掉敏感信息（密码、身份证信息）
-      const data = result.data;
+      const data = result?.data;
       if (data instanceof Array) {
         // 返回的是数组
         for (let idx = 0; idx < data.length; idx++) {

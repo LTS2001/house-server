@@ -69,7 +69,6 @@ export class HouseController {
    */
   @Del('/img', {middleware: [JwtMiddleware]})
   async delHouseImg(@Body() info: { houseId: number, imgName: string }) {
-    console.log(info);
     return new ResultUtils().success(await this.houseService.delHouseImg(info.houseId, info.imgName));
   }
 
