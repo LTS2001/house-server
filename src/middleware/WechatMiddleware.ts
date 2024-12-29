@@ -1,7 +1,7 @@
 import { IMiddleware, Middleware } from '@midwayjs/core';
 import { NextFunction, Context } from '@midwayjs/koa';
-import { config } from '../config/config.wechat';
-import { WechatOfficialUtil } from '../utils/WechatOfficialUtil';
+import { officialConfig } from '../config/config.wechat';
+import { WechatUtil } from '../utils/WechatUtil';
 import sha1 = require('sha1');
 import getRawBody = require('raw-body');
 import axios from 'axios';
@@ -14,9 +14,9 @@ export class AuthMiddleware implements IMiddleware<Context, NextFunction> {
   resolve() {
     return async (ctx: Context, next: NextFunction) => {
       const { signature, timestamp, nonce } = ctx.query;
-      const { token } = config;
+      const { token } = officialConfig;
       // 获取access_token
-      ctx.access_token = await WechatOfficialUtil.getAccessToken();
+      ctx.access_token = await WechatUtil.getAccessToken();
       /**
        * 验证该请求是否来自微信服务器
        * 1）将token、timestamp、nonce三个参数进行字典序排序
@@ -48,12 +48,12 @@ export class RawBodyMiddleware implements IMiddleware<Context, NextFunction> {
       });
       ctx.xml = xml;
       // 转化xml并格式化
-      const messageObj: any = await WechatOfficialUtil.formatMessage(
-        ((await WechatOfficialUtil.parseXML(xml)) as any).xml
+      const messageObj: any = await WechatUtil.formatMessage(
+        ((await WechatUtil.parseXML(xml)) as any).xml
       );
       ctx.messageObj = messageObj;
       const body = await next();
-      return WechatOfficialUtil.reply(
+      return WechatUtil.reply(
         body,
         messageObj.ToUserName,
         messageObj.FromUserName

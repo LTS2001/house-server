@@ -5,7 +5,7 @@ import { HouseCollect } from './HouseCollect';
 import { HouseComment } from './HouseComment';
 import { HouseLease } from './HouseLease';
 import { HouseReport } from './HouseReport';
-import { RentBill } from "./RentBill";
+import { RentBill } from './RentBill';
 
 @EntityModel('landlord', { schema: 'house' })
 export class Landlord {
@@ -96,6 +96,20 @@ export class Landlord {
   })
   identityBorn: Date | null;
 
+  @Column('varchar', {
+    name: 'official_openid',
+    nullable: true,
+    comment: '公众号openid',
+  })
+  officialOpenid: string | null;
+
+  @Column('varchar', {
+    name: 'applet_openid',
+    nullable: true,
+    comment: '小程序openid',
+  })
+  appletOpenid: string | null;
+
   @Column('int', {
     name: 'status',
     comment: '状态：-1(停用)，0(删除)，1(已实名)，2(未实名)',
@@ -122,7 +136,7 @@ export class Landlord {
     name: 'updated_at',
     comment: '更新时间',
     default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP'
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
 
@@ -141,6 +155,6 @@ export class Landlord {
   @OneToMany(() => HouseReport, houseReport => houseReport.landlord)
   houseReports: HouseReport[];
 
-  @OneToMany(() => RentBill, (rentBill) => rentBill.landlord)
+  @OneToMany(() => RentBill, rentBill => rentBill.landlord)
   rentBills: RentBill[];
 }

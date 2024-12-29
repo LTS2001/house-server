@@ -123,4 +123,14 @@ export class TenantDao {
       where: { identityNumber },
     });
   }
+
+  /**
+   * 通过公众号openid获取租客
+   * @param openid 公众号openid
+   */
+  async getTenantByOfficialOpenid(openid: string) {
+    return await this.tenantModel.findOne({
+      where: { officialOpenid: openid },
+    });
+  }
 }

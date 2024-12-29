@@ -23,7 +23,6 @@ export class WechatController {
     middleware: [AuthMiddleware, MenuMiddleware, RawBodyMiddleware],
   })
   async postMain(): Promise<any> {
-    console.log('ctx', this.ctx.messageObj);
     const { messageObj } = this.ctx;
     return this.wechatService.responseToWechat(messageObj);
   }

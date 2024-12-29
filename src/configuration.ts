@@ -15,7 +15,7 @@ import { ValidationFilter } from './filter/ValidationFilter';
 import { BusinessFilter } from '@/filter/BusinessFilter';
 import { NotfoundFilter } from '@/filter/NotfoundFilter';
 import { DefaultFilter } from '@/filter/DefaultFilter';
-import { WechatOfficialUtil } from '@/utils/WechatOfficialUtil';
+import { WechatUtil } from '@/utils/WechatUtil';
 
 @Configuration({
   imports: [
@@ -41,7 +41,7 @@ export class MainConfiguration {
 
   async onReady() {
     // 微信公众号获取access_token
-    await WechatOfficialUtil.getAccessToken();
+    await WechatUtil.getAccessToken();
     // add middleware
     this.app.useMiddleware([GlobalMiddleware]);
     // add filter

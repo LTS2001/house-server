@@ -1,81 +1,27 @@
-import axios from 'axios';
 import FormData from 'form-data';
+import puppeteer from 'puppeteer';
 import xml2js = require('xml2js');
 import fs = require('fs');
 import ejs = require('ejs');
-import { config } from '../config/config.wechat';
-const { appSecret, appid } = config;
+import { officialConfig } from '../config/config.wechat';
+import { wechatAxios } from '@/request';
+import { TemplateUtil } from './TemplateUtil';
+const { appSecret, appid } = officialConfig;
 const accessTokenPath = 'access_token.txt';
 
 /**
  * 关注时响应模板
  */
-const subscribeTemplate = [
-  '欢迎关注LTS行间小筑公众号\n',
-  '1、发送“某年某月账单”即可查询当月账单\n',
-  '如：发送“2024年12月账单”即可查询2024年12月的租金账单\n',
-  '2、发送“租赁合同”即可查询您所租赁的租房合同\n',
-].join('');
-export const subscribeResponse = ejs.compile(subscribeTemplate);
+export const subscribeResponse = ejs.compile(
+  TemplateUtil.getSubscribeTemplate()
+);
 
 /*!
  * 响应模版
  */
-/* eslint-disable indent */
-const tpl = [
-  '<xml>',
-  '<ToUserName><![CDATA[<%-toUsername%>]]></ToUserName>',
-  '<FromUserName><![CDATA[<%-fromUsername%>]]></FromUserName>',
-  '<CreateTime><%=createTime%></CreateTime>',
-  '<MsgType><![CDATA[<%=msgType%>]]></MsgType>',
-  '<% if (msgType === "news") { %>',
-  '<ArticleCount><%=content.length%></ArticleCount>',
-  '<Articles>',
-  '<% content.forEach(function(item){ %>',
-  '<item>',
-  '<Title><![CDATA[<%-item.title%>]]></Title>',
-  '<Description><![CDATA[<%-item.description%>]]></Description>',
-  '<PicUrl><![CDATA[<%-item.picUrl || item.picurl || item.pic || item.thumb_url %>]]></PicUrl>',
-  '<Url><![CDATA[<%-item.url%>]]></Url>',
-  '</item>',
-  '<% }); %>',
-  '</Articles>',
-  '<% } else if (msgType === "music") { %>',
-  '<Music>',
-  '<Title><![CDATA[<%-content.title%>]]></Title>',
-  '<Description><![CDATA[<%-content.description%>]]></Description>',
-  '<MusicUrl><![CDATA[<%-content.musicUrl || content.url %>]]></MusicUrl>',
-  '<HQMusicUrl><![CDATA[<%-content.hqMusicUrl || content.hqUrl %>]]></HQMusicUrl>',
-  '</Music>',
-  '<% } else if (msgType === "voice") { %>',
-  '<Voice>',
-  '<MediaId><![CDATA[<%-content.mediaId%>]]></MediaId>',
-  '</Voice>',
-  '<% } else if (msgType === "image") { %>',
-  '<Image>',
-  '<MediaId><![CDATA[<%-content.mediaId%>]]></MediaId>',
-  '</Image>',
-  '<% } else if (msgType === "video") { %>',
-  '<Video>',
-  '<MediaId><![CDATA[<%-content.mediaId%>]]></MediaId>',
-  '<Title><![CDATA[<%-content.title%>]]></Title>',
-  '<Description><![CDATA[<%-content.description%>]]></Description>',
-  '</Video>',
-  '<% } else if (msgType === "transfer_customer_service") { %>',
-  '<% if (content && content.kfAccount) { %>',
-  '<TransInfo>',
-  '<KfAccount><![CDATA[<%-content.kfAccount%>]]></KfAccount>',
-  '</TransInfo>',
-  '<% } %>',
-  '<% } else { %>',
-  '<Content><![CDATA[<%-content%>]]></Content>',
-  '<% } %>',
-  '</xml>',
-].join('');
-/* eslint-enable indent */
-const compiled = ejs.compile(tpl);
+const compiled = ejs.compile(TemplateUtil.getWechatResponseXMLTemplate());
 
-export class WechatOfficialUtil {
+export class WechatUtil {
   /**
    * 转化xml格式的数据
    * @param xml xml格式数据
@@ -167,16 +113,16 @@ export class WechatOfficialUtil {
    * 请求access_token
    */
   static async requestAccessToken() {
-    const res: any = await axios.get(
-      `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${appSecret}`
+    const res: any = await wechatAxios.get(
+      `/cgi-bin/token?grant_type=client_credential&appid=${appid}&secret=${appSecret}`
     );
     const tokenObj = {
-      ...res.data,
+      ...res,
       create_at: Math.floor(new Date().getTime() / 1000),
     };
     // 写入文件
     fs.writeFile(accessTokenPath, JSON.stringify(tokenObj), 'utf-8', err => {
-      console.error(err);
+      console.error('access_token写入错误', err);
     });
     return tokenObj.access_token;
   }
@@ -232,8 +178,8 @@ export class WechatOfficialUtil {
     const form = new FormData();
     form.append('media', fs.createReadStream(path)); // 音频文件路径
     try {
-      const response = await axios.post(
-        `https://api.weixin.qq.com/cgi-bin/media/upload?access_token=${accessToken}&type=${type}`,
+      const response = await wechatAxios.post(
+        `/cgi-bin/media/upload?access_token=${accessToken}&type=${type}`,
         form,
         {
           headers: {
@@ -247,5 +193,70 @@ export class WechatOfficialUtil {
     } catch (error) {
       return '';
     }
+  }
+
+  /**
+   * 生成pdf
+   * @param data 数据
+   * @param filePath 生成文件的路径
+   */
+  static async generateRentBillPDF(data, filePath) {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+
+    // 构建 HTML 模板
+    const htmlContent = `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { text-align: center; }
+          .bill { margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>房租账单</h1>
+        <div class="bill">
+          <p>租户姓名: ${data.date}</p>
+        </div>
+        <p style="text-align: center;">感谢您的及时付款！</p>
+      </body>
+    </html>
+  `;
+
+    await page.setContent(htmlContent);
+    await page.pdf({ path: filePath, format: 'A4' });
+
+    await browser.close();
+  }
+
+  /**
+   * 生成图片
+   * @param data 数据
+   * @param filePath 生成图片的路径
+   */
+  static async generateRentBillPNG(data: any, filePath: string) {
+    const browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    const page = await browser.newPage();
+
+    // 构建 HTML 模板
+    const htmlContent = TemplateUtil.getBillTemplate(data);
+
+    await page.setContent(htmlContent);
+    await page.screenshot({
+      path: filePath,
+      clip: {
+        x: 0,
+        y: 0,
+        width: 890,
+        height: 580,
+      },
+    });
+
+    await browser.close();
   }
 }

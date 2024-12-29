@@ -65,4 +65,21 @@ export class RentBillDao {
       },
     });
   }
+
+  /**
+   * 通过特定的租客和账单日期查询账单
+   * @param param 租客id
+   * @param param 账单日期
+   */
+  async getRentBillByTenantIdAndBillDate({
+    tenantId,
+    billDate,
+  }: {
+    tenantId: number;
+    billDate: string;
+  }) {
+    return await this.rentBillModel.find({
+      where: { tenantId, billDate },
+    });
+  }
 }
