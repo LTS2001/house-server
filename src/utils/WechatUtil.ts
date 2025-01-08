@@ -122,7 +122,9 @@ export class WechatUtil {
     };
     // 写入文件
     fs.writeFile(accessTokenPath, JSON.stringify(tokenObj), 'utf-8', err => {
-      console.error('access_token写入错误', err);
+      if (err) {
+        console.error('access_token写入错误', err);
+      }
     });
     return tokenObj.access_token;
   }

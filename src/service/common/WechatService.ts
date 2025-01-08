@@ -6,7 +6,7 @@ import { Tenant } from '@/entities/Tenant';
 import { RentBillDao } from '@/dao/house/RentBillDao';
 import { LandlordDao } from '@/dao/user/LandlordDao';
 import { HouseDao } from '@/dao/house/HouseDao';
-import { STATIC_ROOT, UPLOAD_ROOT } from '@/constant/imageConstant';
+import { RentBill } from '@/entities/RentBill';
 
 interface AcceptWechatMsg {
   ToUserName: string;
@@ -89,8 +89,8 @@ export class WechatService {
         t.officialOpenid = FromUserName;
         await this.tenantDao.updateTenant(tenant.phone, t);
         return '用户绑定手机号成功！';
-      } else if(tenant?.id && tenant?.officialOpenid) {
-        return '请正确输入您所注册的手机号哟！'
+      } else if (tenant?.id && tenant?.officialOpenid) {
+        return '请正确输入您所注册的手机号哟！';
       }
       // 之前绑定手机号
       else {
@@ -126,43 +126,99 @@ export class WechatService {
         const houses = await this.houseDao.getHouseByHouseIds(
           bills.map(b => b.houseId)
         );
-        const pngUrl = [];
+        // const pngUrl = [];
         const promises = bills.map(bill => {
           return new Promise(async (resolve, reject) => {
             const landlord = landlords.find(l => l.id === bill.landlordId);
             const house = houses.find(h => h.id === bill.houseId);
-            const pngName = `${year}-${month}_${tenant.phone}_${house.id}_${
-              landlord.id
-            }_${new Date().getTime()}.png`;
+            // const pngName = `${year}-${month}_${tenant.phone}_${house.id}_${
+            //   landlord.id
+            // }_${new Date().getTime()}.png`;
             resolve({
-              houseName: house.name,
+              ...bill,
+              id: bill.id.toString().padStart(7, '0'),
+              tenantName: tenant.identityName,
               landlordName: landlord.identityName,
-              url: `${STATIC_ROOT}/${pngName}`,
+              houseName: house.name,
+              billDate: `${year}年${month}月`,
+              housePrice: house.price,
+              waterFee: house.waterFee,
+              electricityFee: house.electricityFee,
+              fuelFee: house.fuelFee,
             });
-            pngUrl.push(`/${pngName}`);
-            try {
-              await WechatUtil.generateRentBillPNG(
-                {
-                  ...bill,
-                  id: bill.id.toString().padStart(7, '0'),
-                  tenantName: tenant.identityName,
-                  landlordName: landlord.identityName,
-                  houseName: house.name,
-                  billDate: `${year}年${month}月`,
-                  housePrice: house.price,
-                  waterFee: house.waterFee,
-                  electricityFee: house.electricityFee,
-                  fuelFee: house.fuelFee,
-                },
-                `${UPLOAD_ROOT}/${pngName}`
-              );
-            } catch (error) {}
+            // pngUrl.push(`/${pngName}`);
+            /**
+             * 服务器内存不足，不玩了
+             */
+            // try {
+            // await WechatUtil.generateRentBillPNG(
+            //   {
+            //     ...bill,
+            //     id: bill.id.toString().padStart(7, '0'),
+            //     tenantName: tenant.identityName,
+            //     landlordName: landlord.identityName,
+            //     houseName: house.name,
+            //     billDate: `${year}年${month}月`,
+            //     housePrice: house.price,
+            //     waterFee: house.waterFee,
+            //     electricityFee: house.electricityFee,
+            //     fuelFee: house.fuelFee,
+            //   },
+            //   `${UPLOAD_ROOT}/${pngName}`
+            // );
+            // } catch (error) {}
           });
         });
         return (await Promise.all(promises))
-          .map(({ url, houseName, landlordName }) => {
-            return `${landlordName}_${houseName}：${url}`;
-          })
+          .map(
+            (
+              data: RentBill & {
+                tenantName: string;
+                landlordName: string;
+                houseName: string;
+                housePrice: number;
+                fuelFee: number;
+                electricityFee: number;
+                waterFee: number;
+              }
+            ) => {
+              const {
+                landlordName,
+                totalPrice,
+                houseName,
+                billDate,
+                lastWaterMeter,
+                lastElectricityMeter,
+                lastFuelMeter,
+                waterMeter,
+                electricityMeter,
+                fuelMeter,
+                housePrice,
+                fuelFee,
+                electricityFee,
+                waterFee,
+                id,
+              } = data;
+              return [
+                `${landlordName}_${houseName}`,
+                `${billDate}账单`,
+                `单号：${id}`,
+                `1.【水费】上个月：${lastWaterMeter}吨，当月：${waterMeter}吨，实用：${
+                  waterMeter - lastWaterMeter
+                }吨，金额：${waterFee * (waterMeter - lastWaterMeter)}元`,
+                `2.【电费】上个月：${lastElectricityMeter}度，当月：${electricityMeter}度，实用：${
+                  electricityMeter - lastElectricityMeter
+                }度，金额：${
+                  electricityFee * (electricityMeter - lastElectricityMeter)
+                }元`,
+                `3.【燃气费】上个月：${lastFuelMeter}m³，当月：${fuelMeter}m³，实用：${
+                  fuelMeter - lastFuelMeter
+                }m³，金额：${fuelFee * (fuelMeter - lastFuelMeter)}元`,
+                `4.【房租】${housePrice}元/月`,
+                `5.【总计】${totalPrice}元`,
+              ].join('\n');
+            }
+          )
           .join('\n');
       }
       // 校验租赁合同
