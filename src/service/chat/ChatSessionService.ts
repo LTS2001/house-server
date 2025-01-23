@@ -3,7 +3,13 @@ import { ChatSessionDao } from '@/dao/chat/ChatSessionDao';
 import { ChatSession } from '@/entities/ChatSession';
 import { LeaveChatSessionReq } from '@/dto/chat/ChatDto';
 import { ChatMessageDao } from '@/dao/chat/ChatMessageDao';
-import { CHAT_SESSION_LAST, CHAT_SESSION_OFFLINE, CHAT_SESSION_ONLINE } from '@/constant/chatConstant';
+import {
+  CHAT_SESSION_LAST,
+  CHAT_SESSION_OFFLINE,
+  CHAT_SESSION_ONLINE,
+} from '@/constant/chatConstant';
+import { BusinessException } from '@/exception/BusinessException';
+import { ResponseCode } from '@/common/ResponseFormat';
 
 @Provide()
 export class ChatSessionService {
@@ -17,7 +23,11 @@ export class ChatSessionService {
    */
   async addChatSession(senderId: string, receiverId: string) {
     // 查看该 senderId 和 receiverId 之间的聊天会话是否存在
-    const sessionList = await this.chatSessionDao.getChatSessionBetweenSenderAndReceiverBySenderId(senderId, receiverId);
+    const sessionList =
+      await this.chatSessionDao.getChatSessionBetweenSenderAndReceiverBySenderId(
+        senderId,
+        receiverId
+      );
     const chatSessionList = sessionList.filter(item => {
       if (item.senderId === senderId && item.delByReceiver) {
         return true;
@@ -28,9 +38,13 @@ export class ChatSessionService {
       }
     });
     // 查看 senderId 的会话列表是否正常（会话列表至多一个是正常的）
-    let senderNormalSession = chatSessionList.find(c => c.senderId === senderId);
+    let senderNormalSession = chatSessionList.find(
+      c => c.senderId === senderId
+    );
     // 查看 receiverId 的会话列表是否正常（会话列表至多一个是正常的）
-    const receiverNormalSession = chatSessionList.find(c => c.senderId === receiverId);
+    const receiverNormalSession = chatSessionList.find(
+      c => c.senderId === receiverId
+    );
 
     // 添加 receiver -> sender 的会话
     if (!receiverNormalSession) {
@@ -45,14 +59,19 @@ export class ChatSessionService {
       const chatSession = new ChatSession();
       chatSession.senderId = senderId;
       chatSession.receiverId = receiverId;
-      senderNormalSession = await this.chatSessionDao.addChatSession(chatSession);
+      senderNormalSession = await this.chatSessionDao.addChatSession(
+        chatSession
+      );
     }
 
     // 将 senderNormalSession 改为在线，同时清空未读消息
     const chatSession = new ChatSession();
     chatSession.isOnline = CHAT_SESSION_ONLINE;
     chatSession.unread = 0;
-    await this.chatSessionDao.updateChatSessionBySessionId(senderNormalSession.id, chatSession);
+    await this.chatSessionDao.updateChatSessionBySessionId(
+      senderNormalSession.id,
+      chatSession
+    );
 
     return senderNormalSession;
   }
@@ -64,7 +83,10 @@ export class ChatSessionService {
    */
   async delChatSession(senderId: string, receiverId: string) {
     // 删除 session 会话记录（由 senderId 发起的 session）
-    const delChatSessionList = await this.chatSessionDao.delChatSession(senderId, receiverId);
+    const delChatSessionList = await this.chatSessionDao.delChatSession(
+      senderId,
+      receiverId
+    );
     console.log(delChatSessionList);
   }
 
@@ -74,13 +96,18 @@ export class ChatSessionService {
    */
   async getChatSession(senderId: string) {
     // 查询 senderId 的所有正常的 session 列表
-    const sessionList = await this.chatSessionDao.getChatSessionWorkSenderAndReceiver(senderId);
-    const lastSessionList = sessionList.filter(s => s.isLast === CHAT_SESSION_LAST);
+    const sessionList =
+      await this.chatSessionDao.getChatSessionWorkSenderAndReceiver(senderId);
+    const lastSessionList = sessionList.filter(
+      s => s.isLast === CHAT_SESSION_LAST
+    );
     const resultSessionList: ChatSession[] = [];
     lastSessionList.forEach(session => {
       if (session.senderId !== senderId) {
-        const {senderId, receiverId} = session;
-        const currentSession = sessionList.find(s => s.senderId === receiverId && s.receiverId === senderId);
+        const { senderId, receiverId } = session;
+        const currentSession = sessionList.find(
+          s => s.senderId === receiverId && s.receiverId === senderId
+        );
         resultSessionList.push(currentSession);
       } else {
         resultSessionList.push(session);
@@ -94,15 +121,39 @@ export class ChatSessionService {
    * @param chat
    */
   async leaveChatSession(chat: LeaveChatSessionReq) {
-    const {senderId, receiverId} = chat;
+    const { senderId, receiverId } = chat;
     // 更改在线状态，改为离线
-    const sessionList = await this.chatSessionDao.getChatSessionBetweenSenderAndReceiverBySenderId(senderId, receiverId);
+    const sessionList =
+      await this.chatSessionDao.getChatSessionBetweenSenderAndReceiverBySenderId(
+        senderId,
+        receiverId
+      );
     const senderSession = sessionList.find(s => s.senderId === senderId);
     const chatSession = new ChatSession();
     chatSession.isOnline = CHAT_SESSION_OFFLINE;
-    await this.chatSessionDao.updateChatSessionBySessionId(senderSession.id, chatSession);
+    await this.chatSessionDao.updateChatSessionBySessionId(
+      senderSession.id,
+      chatSession
+    );
 
     // 移除游标
-    ChatMessageDao.sessionCursor.delete(`${ senderId }-${ receiverId }`);
+    ChatMessageDao.sessionCursor.delete(`${senderId}-${receiverId}`);
+  }
+
+  /**
+   * 清除当前发送者的游标
+   * @param senderId
+   */
+  async clearSenderSessionCursor(senderId: string) {
+    if (!senderId)
+      throw new BusinessException(
+        ResponseCode.PARAMS_ERROR,
+        '发送者id不能为空'
+      );
+    const cursorKeys = ChatMessageDao.sessionCursor.keys();
+    // 清除游标
+    for (let key of cursorKeys) {
+      if (key.startsWith(senderId)) ChatMessageDao.sessionCursor.delete(key);
+    }
   }
 }

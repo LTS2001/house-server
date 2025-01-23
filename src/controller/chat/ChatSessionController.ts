@@ -38,5 +38,8 @@ export class ChatSessionController {
     return new ResultUtils().success(await this.chatSessionService.leaveChatSession(chatReq));
   }
 
-
+  @Put('/clearSenderCursor')
+  async clearSenderSessionCursor(@Body('senderId') senderId: string) {
+    return new ResultUtils().success(await this.chatSessionService.clearSenderSessionCursor(senderId))
+  }
 }
