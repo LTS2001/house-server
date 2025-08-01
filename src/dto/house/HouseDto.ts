@@ -64,7 +64,7 @@ class BaseHouseReq {
   @Rule(RuleNumRequired)
   longitude: number;
 
-  @Rule(RuleType.string().empty(''))
+  @Rule(RuleType.string().allow(null))
   note: string;
 
   @Rule(RuleType.number().empty(''))

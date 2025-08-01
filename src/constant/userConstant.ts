@@ -41,12 +41,12 @@ export const TENANT_NAME = '单身租客';
 /**
  * 房东身份
  */
-export const LANDLORD = 'LANDLORD';
+export const LANDLORD = 'landlord';
 
 /**
  * 租客身份
  */
-export const TENANT = 'TENANT';
+export const TENANT = 'tenant';
 
 /**
  * 用户账号正常
