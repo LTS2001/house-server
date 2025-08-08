@@ -65,8 +65,8 @@ export class LeaseController {
     return new ResultUtils().success(await this.leaseService.getRefundLeaseHistory(tenantId));
   }
 
-  @Get('/houseId', {middleware: [JwtMiddleware]})
-  async getLeaseByHouseId(@Query('houseId') houseId: number) {
-    return new ResultUtils().success(await this.leaseService.getLeaseByHouseId(houseId))
+  @Get('/tenant', {middleware: [JwtMiddleware]})
+  async getLeaseTenantByHouseId(@Query('houseId') houseId: number) {
+    return new ResultUtils().success(await this.leaseService.getLeaseTenantByHouseId(houseId))
   }
 }

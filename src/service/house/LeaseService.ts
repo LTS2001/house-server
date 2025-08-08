@@ -187,7 +187,7 @@ export class LeaseService {
     });
   }
 
-  async getLeaseByHouseId(houseId: number) {
+  async getLeaseTenantByHouseId(houseId: number) {
     const lease = await this.leaseDao.getLeaseByHouseId(houseId);
     if (!lease?.tenantId) return null;
     return (await this.tenantDao.getTenantByIds([lease.tenantId]))[0];
