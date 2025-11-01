@@ -1,7 +1,7 @@
 import { Provide } from '@midwayjs/core';
 import { ChatMessage } from '@/entities/ChatMessage';
 import { InjectEntityModel } from '@midwayjs/orm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { CHAT_MESSAGE_NORMAL } from '@/constant/chatConstant';
 
 @Provide()
@@ -9,7 +9,7 @@ export class ChatMessageDao {
   /**
    * 存储聊天会话的游标位置
    */
-  static sessionCursor = new Map<string, Date>;
+  static sessionCursor = new Map<string, Date>();
 
   @InjectEntityModel(ChatMessage)
   private chatMessageModel: Repository<ChatMessage>;
@@ -30,43 +30,45 @@ export class ChatMessageDao {
    * @param limit 一页获取的数据
    * @param session
    */
-  async getChatMessage(
-    senderId: string,
-    receiverId: string,
-    page: number,
-    limit: number,
-    session: { sessionId: number, senderId: string, receiverId: string }[],
-  ) {
+  async getChatMessage(params: {
+    senderId: string;
+    receiverId: string;
+    limit: number;
+    session: { sessionId: number; senderId: string; receiverId: string }[];
+  }) {
+    const { senderId, receiverId, limit, session } = params;
     // 获取游标
-    const cursor = ChatMessageDao.sessionCursor.get(`${ senderId }-${ receiverId }`) || new Date();
+    const cursor =
+      ChatMessageDao.sessionCursor.get(`${senderId}-${receiverId}`) ||
+      new Date();
 
     const messageList = await this.chatMessageModel.find({
       where: session.map(s => {
-        if (s.senderId === senderId) { // 说明会话是sender发起的
+        if (s.senderId === senderId) {
+          // 说明会话是sender发起的
           return {
             ...s,
             delBySender: CHAT_MESSAGE_NORMAL,
-            createdAt: LessThanOrEqual(cursor)
+            createdAt: LessThan(cursor),
           };
-        } else { // 否则就是receiver发起的
+        } else {
+          // 否则就是receiver发起的
           return {
             ...s,
             delByReceiver: CHAT_MESSAGE_NORMAL,
-            createdAt: LessThanOrEqual(cursor)
+            createdAt: LessThan(cursor),
           };
         }
       }),
       order: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
-      skip: page - 1,
-      take: limit
+      take: limit,
     });
     if (messageList.length) {
       const date = messageList[messageList.length - 1].createdAt;
-      ChatMessageDao.sessionCursor.delete(`${ senderId }-${ receiverId }`);
       // 存储游标，key格式（senderId-receiverId）
-      ChatMessageDao.sessionCursor.set(`${ senderId }-${ receiverId }`, date);
+      ChatMessageDao.sessionCursor.set(`${senderId}-${receiverId}`, date);
     }
     return messageList;
   }
@@ -80,12 +82,17 @@ export class ChatMessageDao {
       .createQueryBuilder('chat')
       .select('chat.session_id')
       .addSelect('MAX(chat.updated_at)', 'max_updated_at')
-      .where('chat.session_id IN (:...sessionIds)', {sessionIds: sessionIdList})
+      .where('chat.session_id IN (:...sessionIds)', {
+        sessionIds: sessionIdList,
+      })
       .groupBy('chat.session_id')
       .getRawMany();
     if (!latestRecords.length) return [];
     return await this.chatMessageModel.find({
-      where: latestRecords.map(r => ({sessionId: r.session_id, updatedAt: r.max_updated_at}))
+      where: latestRecords.map(r => ({
+        sessionId: r.session_id,
+        updatedAt: r.max_updated_at,
+      })),
     });
   }
 }

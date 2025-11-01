@@ -44,11 +44,6 @@ export class GetChatMessageReq extends BaseChatSession {
    */
   @Rule(RuleNumRequire)
   limit: number;
-  /**
-   * 页数（当前第几页）
-   */
-  @Rule(RuleNumRequire)
-  page: number;
 }
 
 /**
