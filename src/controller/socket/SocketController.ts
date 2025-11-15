@@ -32,15 +32,12 @@ export class SocketController {
     console.log(`${identity},${id}连接了socket`);
 
     socket.addEventListener('message', ({ data }) => {
-      const { toIdentity, toId, active } = JSON.parse(data as string);
+      const { toIdentity, toId } = JSON.parse(data as string);
       // 获取目标socketInstance
       const currentSocketInstance = SocketController.socketListInstance.get(
         `${toIdentity},${toId}`
       );
-      currentSocketInstance &&
-        currentSocketInstance.send(
-          JSON.stringify({ toIdentity, toId, active })
-        );
+      currentSocketInstance && currentSocketInstance.send(data);
     });
 
     socket.addEventListener('close', ({ target }) => {
