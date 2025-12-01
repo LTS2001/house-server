@@ -18,14 +18,8 @@ export class SocketController {
       `${identity},${id}`
     );
     if (currentSocketInstance) {
-      currentSocketInstance.send(
-        JSON.stringify({
-          toIdentity: identity,
-          toId: id,
-          active: 'AlreadyConnected',
-        })
-      );
-      return;
+      // 关闭旧的连接
+      currentSocketInstance.close();
     }
     // 身份+id作为键存储当前客户端的链接
     SocketController.socketListInstance.set(`${identity},${id}`, socket);
