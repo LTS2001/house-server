@@ -69,4 +69,12 @@ export class LeaseController {
   async getLeaseTenantByHouseId(@Query('houseId') houseId: number) {
     return new ResultUtils().success(await this.leaseService.getLeaseTenantByHouseId(houseId))
   }
+
+  /**
+   * 兼容微信小程序老接口
+   */
+  @Get('/houseId', {middleware: [JwtMiddleware]})
+  async getLeaseTenantByHouseIdWeChat(@Query('houseId') houseId: number) {
+    return new ResultUtils().success(await this.leaseService.getLeaseTenantByHouseId(houseId))
+  }
 }

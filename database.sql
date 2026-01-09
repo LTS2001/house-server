@@ -1,3 +1,9 @@
+-- 创建库
+create database if not exists house_rent;
+
+-- 切换库
+use house_rent;
+
 create table admin
 (
     id         int auto_increment
@@ -97,7 +103,9 @@ create table landlord
     identity_address varchar(255)                       null comment '身份证地址',
     identity_sex     int                                null comment '身份证性别：0(女)，1(男)',
     identity_nation  varchar(255)                       null comment '身份证民族',
-    identity_born    date                               null comment '身份证出生日期'
+    identity_born    date                               null comment '身份证出生日期',
+    official_openid  varchar(255)                       null COMMENT '公众号openid',
+    applet_openid    varchar(255)                       null COMMENT '小程序openid'
 );
 
 create table house
@@ -156,7 +164,9 @@ create table tenant
     identity_address varchar(255)                       null comment '身份证地址',
     identity_sex     int                                null comment '身份证性别：0(女)，1(男)',
     identity_nation  varchar(255)                       null comment '身份证民族',
-    identity_born    date                               null comment '身份证出生日期'
+    identity_born    date                               null comment '身份证出生日期',
+    official_openid  varchar(255)                       null COMMENT '公众号openid',
+    applet_openid    varchar(255)                       null COMMENT '小程序openid'
 );
 
 create table house_collect

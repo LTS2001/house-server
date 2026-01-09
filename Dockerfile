@@ -1,7 +1,7 @@
-FROM node:18.20.5
+FROM node:22.19.0
 
-WORKDIR /var/www/service-work/house
-COPY . /var/www/service-work/house
+WORKDIR /var/www/house-service
+COPY . /var/www/house-service
 
 RUN npm i -g pnpm
 RUN pnpm i
@@ -9,4 +9,4 @@ RUN pnpm i
 EXPOSE 7002
 EXPOSE 7003
 
-CMD [ "npm", "run", "dev" ]
+CMD [ "pnpm", "run", "start" ]

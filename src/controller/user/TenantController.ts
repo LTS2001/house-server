@@ -1,5 +1,5 @@
 import { Body, Controller, File, Get, Inject, Post, Put, Query } from '@midwayjs/core';
-import { TenantService } from 'src/service/user/TenantService';
+import { TenantService } from '@/service/user/TenantService';
 import { ResultUtils } from '@/common/ResultUtils';
 import { JwtMiddleware } from '@/middleware/JwtMiddleware';
 import { AuthUtil } from '@/utils/AuthUtil';
