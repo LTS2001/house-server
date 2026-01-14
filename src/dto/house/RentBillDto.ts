@@ -1,61 +1,61 @@
 import { Rule, RuleType } from '@midwayjs/validate';
-const RuleNumRequired = RuleType.number().required();
-const RuleStrRequired = RuleType.string().required();
+const RuleNum = RuleType.number().empty();
+const RuleStr = RuleType.string().empty();
 export class AddRentBillReq {
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   landlordId: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   tenantId: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   houseId: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   lastElectricityMeter: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   electricityMeter: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   lastWaterMeter: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   waterMeter: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   lastFuelMeter: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   fuelMeter: number;
 
-  @Rule(RuleStrRequired)
+  @Rule(RuleStr)
   billDate: string;
 
-  @Rule(RuleNumRequired)
-  totalPrice: number
+  @Rule(RuleNum)
+  totalPrice: number;
 }
 
 export class GetRentBillByLandlordIdReq {
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   landlordId: number;
 }
 
 export class GetRentBillByTenantIdReq {
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   tenantId: number;
 }
 
 export class GetRentBillByBillDateObjReq {
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   landlordId: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   tenantId: number;
 
-  @Rule(RuleNumRequired)
+  @Rule(RuleNum)
   houseId: number;
 
-  @Rule(RuleStrRequired)
+  @Rule(RuleStr)
   billDate: string;
 }
